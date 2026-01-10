@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ShipmentStatus {
+  PENDING
+  QUOTED
+  ACCEPTED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum ServiceType {
+  ROAD
+  AIR
+  SEA
+  DOOR_TO_DOOR
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipments Shipment[]
+
+  @@index([name])
+}
+
+model Shipment {
+  id          String         @id @default(uuid())
+  trackingId  String         @unique
+  customerId  String
+  customer    Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  serviceType ServiceType
+  status      ShipmentStatus @default(PENDING)
+
+  pickupLocation      String
+  destinationLocation String
+
+  packageType String
+  weight      String
+  dimensions  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusHistory ShipmentStatusHistory[]
+  checkpoints   ShipmentCheckpoint[]
+  notes         ShipmentNote[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ShipmentStatusHistory {
+  id         String         @id @default(uuid())
+  shipmentId String
+  shipment   Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  status     ShipmentStatus
+  timestamp  DateTime       @default(now())
+  adminName  String?
+  note       String?
+
+  @@index([shipmentId])
+  @@index([shipmentId, timestamp])
+}
+
+model ShipmentCheckpoint {
+  id          String   @id @default(uuid())
+  shipmentId  String
+  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  location    String
+  description String
+  timestamp   DateTime @default(now())
+  adminName   String?
+
+  @@index([shipmentId])
+  @@index([shipmentId, timestamp])
+}
+
+model ShipmentNote {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  text       String
+  timestamp  DateTime @default(now())
+  adminName  String?
+
+  @@index([shipmentId])
+  @@index([shipmentId, timestamp])
+}
