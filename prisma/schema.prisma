@@ -29,7 +29,7 @@ enum ServiceType {
 
 model Customer {
   id        String   @id @default(uuid())
-  name      String
+  name      String?
   email     String   @unique
   phone     String?
   passwordHash String @db.VarChar(60)
