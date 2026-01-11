@@ -35,4 +35,8 @@ export class CreateShipmentDto {
   @IsString()
   @IsNotEmpty()
   dimensions: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
 }

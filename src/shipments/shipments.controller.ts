@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  SetMetadata,
   UseGuards,
   Query,
   Request,
@@ -19,10 +20,11 @@ import { AddNoteDto } from './dto/add-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('shipments')
-@UseGuards(JwtAuthGuard)
 export class ShipmentsController {
   constructor(private readonly shipmentsService: ShipmentsService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @SetMetadata('response_message', 'Shipment created successfully.')
   @Post()
   create(@Body() createShipmentDto: CreateShipmentDto, @Request() req) {
     // If customerId is not provided, use the authenticated user's ID
@@ -32,6 +34,7 @@ export class ShipmentsController {
     return this.shipmentsService.create(createShipmentDto);
   }
 
+  @SetMetadata('response_message', 'Shipments fetched successfully.')
   @Get()
   findAll(
     @Query('customerId') customerId?: string,
@@ -40,16 +43,20 @@ export class ShipmentsController {
     return this.shipmentsService.findAll(customerId, status);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @SetMetadata('response_message', 'Shipment fetched successfully.')
   @Get('tracking/:trackingId')
   findByTrackingId(@Param('trackingId') trackingId: string) {
     return this.shipmentsService.findByTrackingId(trackingId);
   }
 
+  @SetMetadata('response_message', 'Shipment fetched successfully.')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.shipmentsService.findOne(id);
   }
 
+  @SetMetadata('response_message', 'Shipment updated successfully.')
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -58,6 +65,7 @@ export class ShipmentsController {
     return this.shipmentsService.update(id, updateShipmentDto);
   }
 
+  @SetMetadata('response_message', 'Shipment status updated successfully.')
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
@@ -66,6 +74,7 @@ export class ShipmentsController {
     return this.shipmentsService.updateStatus(id, updateStatusDto);
   }
 
+  @SetMetadata('response_message', 'Checkpoint added successfully.')
   @Post(':id/checkpoints')
   addCheckpoint(
     @Param('id') id: string,
@@ -74,11 +83,13 @@ export class ShipmentsController {
     return this.shipmentsService.addCheckpoint(id, addCheckpointDto);
   }
 
+  @SetMetadata('response_message', 'Note added successfully.')
   @Post(':id/notes')
   addNote(@Param('id') id: string, @Body() addNoteDto: AddNoteDto) {
     return this.shipmentsService.addNote(id, addNoteDto);
   }
 
+  @SetMetadata('response_message', 'Shipment deleted successfully.')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.shipmentsService.remove(id);

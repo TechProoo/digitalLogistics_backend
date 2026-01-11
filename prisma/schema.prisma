@@ -55,6 +55,7 @@ model Shipment {
   packageType String
   weight      String
   dimensions  String
+  phone       String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

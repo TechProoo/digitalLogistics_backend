@@ -37,6 +37,7 @@ export class ShipmentsService {
         packageType: createShipmentDto.packageType,
         weight: createShipmentDto.weight,
         dimensions: createShipmentDto.dimensions,
+        phone: createShipmentDto.phone,
         status: 'PENDING',
       },
       include: {
