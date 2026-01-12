@@ -39,4 +39,8 @@ export class CreateShipmentDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
+
+  @IsString()
+  @IsOptional()
+  receiverPhone?: string;
 }
