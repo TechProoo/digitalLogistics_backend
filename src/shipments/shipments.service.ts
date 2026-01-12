@@ -39,6 +39,7 @@ export class ShipmentsService {
         dimensions: createShipmentDto.dimensions,
         phone: createShipmentDto.phone,
         receiverPhone: createShipmentDto.receiverPhone,
+        amount: createShipmentDto.amount,
         status: 'PENDING',
       },
       include: {

@@ -1,5 +1,7 @@
 import {
   IsEnum,
+  IsInt,
+  Min,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -43,4 +45,9 @@ export class CreateShipmentDto {
   @IsString()
   @IsOptional()
   receiverPhone?: string;
+
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  amount?: number;
 }

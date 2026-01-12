@@ -57,6 +57,8 @@ model Shipment {
   dimensions  String
   phone       String
   receiverPhone String?
+  // Amount in Nigerian Naira (whole number)
+  amount      Int            @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
