@@ -13,6 +13,7 @@ async function bootstrap() {
     'http://localhost:5174',
     'http://localhost:3000',
     'https://digital-delivery.netlify.app',
+    'https://digital-logistics-admin.netlify.app/',
   ];
 
   const envAllowedOriginsRaw = [
