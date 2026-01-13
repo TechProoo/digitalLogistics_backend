@@ -38,21 +38,30 @@ function parseExpiresInToMs(input: string | undefined): number {
 }
 
 function getCookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+
   const sameSiteEnv = process.env.COOKIE_SAMESITE?.toLowerCase();
-  const sameSite: 'lax' | 'strict' | 'none' =
-    sameSiteEnv === 'none'
+  const hasExplicitSameSite =
+    sameSiteEnv === 'none' || sameSiteEnv === 'strict' || sameSiteEnv === 'lax';
+
+  // For Netlify -> Render (different origins), browsers require SameSite=None for cookies
+  // to be included on XHR/fetch requests.
+  const inferredCrossSite =
+    isProd &&
+    Boolean(process.env.FRONTEND_URL || process.env.CORS_ORIGINS) &&
+    !String(
+      process.env.FRONTEND_URL ?? process.env.CORS_ORIGINS ?? '',
+    ).includes('localhost');
+
+  const sameSite: 'lax' | 'strict' | 'none' = hasExplicitSameSite
+    ? (sameSiteEnv as 'lax' | 'strict' | 'none')
+    : inferredCrossSite
       ? 'none'
-      : sameSiteEnv === 'strict'
-        ? 'strict'
-        : 'lax';
+      : 'lax';
 
   const secureEnv = process.env.COOKIE_SECURE?.toLowerCase();
   const secure =
-    sameSite === 'none'
-      ? true
-      : secureEnv === 'true'
-        ? true
-        : process.env.NODE_ENV === 'production';
+    sameSite === 'none' ? true : secureEnv === 'true' ? true : isProd;
 
   return {
     httpOnly: true,
@@ -92,8 +101,11 @@ export class AuthController {
   @SetMetadata('response_message', 'Logged out successfully.')
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
+    const opts = getCookieOptions();
     res.clearCookie('dd_access_token', {
-      path: '/',
+      path: opts.path,
+      sameSite: opts.sameSite,
+      secure: opts.secure,
     });
     return { ok: true };
   }
