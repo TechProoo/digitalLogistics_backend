@@ -8,11 +8,38 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const frontendUrl = process.env.FRONTEND_URL?.trim();
+  const defaultAllowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'https://digital-delivery.netlify.app',
+  ];
+
+  const envAllowedOriginsRaw = [
+    process.env.CORS_ORIGINS,
+    process.env.FRONTEND_URL,
+  ]
+    .filter(Boolean)
+    .join(',');
+
+  const envAllowedOrigins = envAllowedOriginsRaw
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const allowedOrigins = Array.from(
+    new Set([...defaultAllowedOrigins, ...envAllowedOrigins]),
+  );
 
   app.enableCors({
-    origin: frontendUrl ? [frontendUrl] : true,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.use(cookieParser());

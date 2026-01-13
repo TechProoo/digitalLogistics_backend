@@ -28,6 +28,14 @@
 
 ## Project setup
 
+## Environment variables
+
+- `PORT`: Port to listen on (default: `3000`).
+- `CORS_ORIGINS`: Comma-separated list of allowed browser origins.
+  - Example: `https://digital-delivery.netlify.app,http://localhost:5173`
+  - If omitted, the server allows a small default set (see [src/main.ts](src/main.ts)).
+- `FRONTEND_URL`: Optional single origin to allow (merged into `CORS_ORIGINS`).
+
 ```bash
 $ npm install
 ```
