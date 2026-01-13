@@ -73,11 +73,10 @@ export class AuthService {
       },
     });
 
-    if (!customer)
-      throw new UnauthorizedException('Invalid email or password.');
+    if (!customer) throw new UnauthorizedException("User doesn't exist");
 
     const ok = await bcrypt.compare(dto.password, customer.passwordHash);
-    if (!ok) throw new UnauthorizedException('Invalid email or password.');
+    if (!ok) throw new UnauthorizedException('Invalid password.');
 
     const { passwordHash, ...safeCustomer } = customer;
 
