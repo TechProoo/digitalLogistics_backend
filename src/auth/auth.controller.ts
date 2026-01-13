@@ -75,7 +75,7 @@ export class AuthController {
   ) {
     const result = await this.authService.register(dto);
     res.cookie('dd_access_token', result.accessToken, getCookieOptions());
-    return { customer: result.customer };
+    return { customer: result.customer, accessToken: result.accessToken };
   }
 
   @SetMetadata('response_message', 'Login successful.')
@@ -86,7 +86,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(dto);
     res.cookie('dd_access_token', result.accessToken, getCookieOptions());
-    return { customer: result.customer };
+    return { customer: result.customer, accessToken: result.accessToken };
   }
 
   @SetMetadata('response_message', 'Logged out successfully.')
