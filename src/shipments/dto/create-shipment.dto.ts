@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
 import { ServiceType } from '@prisma/client';
 
@@ -18,13 +19,66 @@ export class CreateShipmentDto {
   @IsNotEmpty()
   serviceType: ServiceType;
 
+  // Backward compatible: clients may send pickupLocation/destinationLocation strings.
+  // New clients can instead send structured fields and the server will compose them.
+  @ValidateIf(
+    (o) =>
+      !o.pickupStreet && !o.pickupCity && !o.pickupState && !o.pickupCountry,
+  )
   @IsString()
   @IsNotEmpty()
-  pickupLocation: string;
+  pickupLocation?: string;
 
+  @ValidateIf((o) => !o.pickupLocation)
   @IsString()
   @IsNotEmpty()
-  destinationLocation: string;
+  pickupStreet?: string;
+
+  @ValidateIf((o) => !o.pickupLocation)
+  @IsString()
+  @IsNotEmpty()
+  pickupCity?: string;
+
+  @ValidateIf((o) => !o.pickupLocation)
+  @IsString()
+  @IsNotEmpty()
+  pickupState?: string;
+
+  @ValidateIf((o) => !o.pickupLocation)
+  @IsString()
+  @IsNotEmpty()
+  pickupCountry?: string;
+
+  @ValidateIf(
+    (o) =>
+      !o.destinationStreet &&
+      !o.destinationCity &&
+      !o.destinationState &&
+      !o.destinationCountry,
+  )
+  @IsString()
+  @IsNotEmpty()
+  destinationLocation?: string;
+
+  @ValidateIf((o) => !o.destinationLocation)
+  @IsString()
+  @IsNotEmpty()
+  destinationStreet?: string;
+
+  @ValidateIf((o) => !o.destinationLocation)
+  @IsString()
+  @IsNotEmpty()
+  destinationCity?: string;
+
+  @ValidateIf((o) => !o.destinationLocation)
+  @IsString()
+  @IsNotEmpty()
+  destinationState?: string;
+
+  @ValidateIf((o) => !o.destinationLocation)
+  @IsString()
+  @IsNotEmpty()
+  destinationCountry?: string;
 
   @IsString()
   @IsNotEmpty()

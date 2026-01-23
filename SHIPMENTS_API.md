@@ -26,8 +26,16 @@ Creates a new shipment with auto-generated tracking ID.
 {
   "customerId": "uuid (optional - defaults to authenticated user)",
   "serviceType": "ROAD | AIR | SEA | DOOR_TO_DOOR",
-  "pickupLocation": "string",
-  "destinationLocation": "string",
+  "pickupLocation": "string (optional if using pickupStreet/pickupCity/pickupState/pickupCountry)",
+  "pickupStreet": "string (optional if pickupLocation is provided)",
+  "pickupCity": "string (optional if pickupLocation is provided)",
+  "pickupState": "string (optional if pickupLocation is provided)",
+  "pickupCountry": "string (optional if pickupLocation is provided)",
+  "destinationLocation": "string (optional if using destinationStreet/destinationCity/destinationState/destinationCountry)",
+  "destinationStreet": "string (optional if destinationLocation is provided)",
+  "destinationCity": "string (optional if destinationLocation is provided)",
+  "destinationState": "string (optional if destinationLocation is provided)",
+  "destinationCountry": "string (optional if destinationLocation is provided)",
   "packageType": "string",
   "weight": "string",
   "dimensions": "string"

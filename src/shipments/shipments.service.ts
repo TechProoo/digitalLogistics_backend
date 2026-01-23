@@ -14,6 +14,13 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ShipmentsService {
   constructor(private prisma: PrismaService) {}
 
+  private formatLocation(parts: Array<string | undefined>): string {
+    return parts
+      .map((p) => (typeof p === 'string' ? p.trim() : ''))
+      .filter(Boolean)
+      .join(', ');
+  }
+
   async create(createShipmentDto: CreateShipmentDto) {
     // Verify customer exists
     const customer = await this.prisma.customer.findUnique({
@@ -27,13 +34,39 @@ export class ShipmentsService {
     // Generate unique tracking ID
     const trackingId = this.generateTrackingId();
 
+    const pickupLocation =
+      createShipmentDto.pickupLocation?.trim() ||
+      this.formatLocation([
+        createShipmentDto.pickupStreet,
+        createShipmentDto.pickupCity,
+        createShipmentDto.pickupState,
+        createShipmentDto.pickupCountry,
+      ]);
+
+    const destinationLocation =
+      createShipmentDto.destinationLocation?.trim() ||
+      this.formatLocation([
+        createShipmentDto.destinationStreet,
+        createShipmentDto.destinationCity,
+        createShipmentDto.destinationState,
+        createShipmentDto.destinationCountry,
+      ]);
+
+    if (!pickupLocation) {
+      throw new BadRequestException('Pickup location is required');
+    }
+
+    if (!destinationLocation) {
+      throw new BadRequestException('Destination location is required');
+    }
+
     const shipment = await this.prisma.shipment.create({
       data: {
         trackingId,
         customerId: createShipmentDto.customerId,
         serviceType: createShipmentDto.serviceType,
-        pickupLocation: createShipmentDto.pickupLocation,
-        destinationLocation: createShipmentDto.destinationLocation,
+        pickupLocation,
+        destinationLocation,
         packageType: createShipmentDto.packageType,
         weight: createShipmentDto.weight,
         dimensions: createShipmentDto.dimensions,
