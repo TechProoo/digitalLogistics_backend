@@ -1,7 +1,19 @@
-import { isNotEmpty, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
-export class MessageDto {
+/**
+ * DTO for incoming chat messages
+ */
+
+export class ChatMessageDto {
   @IsNotEmpty()
   @IsString()
-  user_query: string;
+  message: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }

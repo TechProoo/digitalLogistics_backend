@@ -54,7 +54,9 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
+  const PORT = process.env.PORT || 3000;
 
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000);
+  console.log('🔌 WebSocket: ws://localhost:' + PORT + '/chat');
 }
 bootstrap();
