@@ -1,140 +1,136 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChatMessageDto } from './dto/message.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
+import { GeminiAiService } from '../gemini/gemini-ai.service';
 
-type ChatIntent = 'company_info' | 'pricing' | 'general';
+type ChatIntent =
+  | 'company_info'
+  | 'pricing'
+  | 'general'
+  | 'greeting'
+  | 'help'
+  | 'farewell';
 
-/**
- * Chat service - handles message processing
- *
- * Current: Simple keyword-based responses
- * Future: Will integrate RAG and pricing logic
- */
 @Injectable()
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
-  /**
-   * Process incoming message and generate response
-   */
+  constructor(private readonly geminiAiService: GeminiAiService) {}
+
   async processMessage(dto: ChatMessageDto): Promise<ChatResponseDto> {
     const message = dto.message.toLowerCase();
-
-    // Detect user intent
     const intent = this.detectIntent(message);
 
-    this.logger.debug(`Detected intent: ${intent}`);
+    this.logger.debug(`Intent: ${intent} | Message: "${dto.message}"`);
 
-    // Generate response based on intent
     let responseMessage: string;
 
-    switch (intent) {
-      case 'company_info':
-        responseMessage = this.handleCompanyInfo();
-        break;
+    try {
+      // Quick responses (no AI needed)
+      if (intent === 'greeting') {
+        responseMessage = this.handleGreeting();
+      } else if (intent === 'help') {
+        responseMessage = this.handleHelp();
+      } else if (intent === 'farewell') {
+        responseMessage = this.handleFarewell();
+      } else {
+        // Use Gemini AI for complex questions
+        this.logger.debug('🤖 Using Gemini AI...');
+        responseMessage = await this.geminiAiService.generateResponse(
+          dto.message,
+        );
+      }
 
-      case 'pricing':
-        responseMessage = this.handlePricing();
-        break;
+      return {
+        message: responseMessage,
+        intent,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      this.logger.error(`Error: ${error.message}`);
 
-      default:
-        responseMessage = this.handleDefault(message);
+      // User-friendly error messages
+      let errorMessage =
+        "Sorry, I'm having trouble right now. Please try again.";
+
+      if (error.message.includes('quota')) {
+        errorMessage =
+          "I've reached my daily limit. Please try again tomorrow! 🙏";
+      } else if (error.message.includes('rate limit')) {
+        errorMessage = 'Please wait a moment and try again! ⏳';
+      }
+
+      return {
+        message: errorMessage,
+        intent: 'general',
+        timestamp: new Date(),
+      };
     }
-
-    return {
-      message: responseMessage,
-      intent,
-      timestamp: new Date(),
-    };
   }
 
-  /**
-   * Simple intent detection using keywords
-   */
   private detectIntent(message: string): ChatIntent {
-    // Company info patterns
+    // Simple greeting
     if (
-      /\b(company|about|who are you|your company|business)\b/i.test(message)
+      /^\s*(hi|hello|hey|good morning|good afternoon)\s*[!.?]*\s*$/i.test(
+        message,
+      )
     ) {
+      return 'greeting';
+    }
+
+    // Help request
+    if (/\b(help|what can you do)\b/i.test(message)) {
+      return 'help';
+    }
+
+    // Goodbye
+    if (
+      /^\s*(bye|goodbye|see you|thanks|thank you)\s*[!.?]*\s*$/i.test(message)
+    ) {
+      return 'farewell';
+    }
+
+    // Company info
+    if (/\b(company|about|services|what do you do)\b/i.test(message)) {
       return 'company_info';
     }
-    // Pricing patterns
-    if (/\b(price|pricing|cost|how much|fee|charge)\b/i.test(message)) {
+
+    // Pricing
+    if (/\b(price|pricing|cost|how much|fee)\b/i.test(message)) {
       return 'pricing';
     }
+
     return 'general';
   }
 
-  /**
-   * Handle company info intent
-   */
-  private handleCompanyInfo(): string {
-    return `We are Digital Delivery, your trusted partner for seamless digital logistics and delivery solutions! 🚚✨`;
-  }
-
-  /**
-   * Handle pricing intent
-   */
-  private handlePricing(): string {
-    return `Our pricing is flexible and tailored to your needs. Please contact us for a detailed quote! 💸`;
-  }
-
-  /**
-   * Handle greeting messages
-   */
   private handleGreeting(): string {
     const greetings = [
-      'Hello! 👋 Welcome! How can I help you today?',
+      'Hello! 👋 Welcome to Digital Delivery! How can I help you today?',
       'Hi there! 😊 What can I do for you?',
-      'Hey! Great to see you! How may I assist you?',
-      'Good day! 🌟 What brings you here today?',
+      'Hey! 🌟 How may I assist you?',
     ];
-
-    // Return random greeting
     return greetings[Math.floor(Math.random() * greetings.length)];
   }
 
-  /**
-   * Handle help requests
-   */
   private handleHelp(): string {
-    return `I'm a friendly chatbot! Here's what I can do:
+    return `I'm your Digital Delivery AI assistant! 🤖
 
-💬 **General Chat** - Have a conversation with me
-❓ **Answer Questions** - Ask me anything
-🎯 **Coming Soon** - Logistics and delivery features!
+I can help with:
+💬 General questions about our services
+📦 Delivery information
+💰 Pricing inquiries
+🌍 Coverage areas
+⏰ Operating hours
 
-Try saying:
-- "Hello" to start a conversation
-- "Help" to see this message again
-- "Thanks" when you're done
-
-What would you like to talk about?`;
+Just ask me any question!`;
   }
 
-  /**
-   * Handle farewell messages
-   */
   private handleFarewell(): string {
     const farewells = [
       'Goodbye! 👋 Have a great day!',
-      'See you later! Feel free to come back anytime! 😊',
-      'Thanks for chatting! Take care! 🌟',
-      'Bye! Looking forward to our next conversation! ✨',
+      'See you later! 😊 Thanks for chatting!',
+      'Bye! 🌟 Come back anytime!',
     ];
-
     return farewells[Math.floor(Math.random() * farewells.length)];
-  }
-
-  /**
-   * Default response for general messages
-   */
-  private handleDefault(message: string): string {
-    // Echo understanding
-    return `I heard you say: "${message}"
-
-I'm a simple chatbot right now, but I'm learning! 🤖
-
-Try asking me for "help" to see what I can do, or just chat with me!`;
   }
 }
