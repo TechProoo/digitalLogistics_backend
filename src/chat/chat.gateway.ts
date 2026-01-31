@@ -41,7 +41,6 @@ const gatewayAllowedOrigins = Array.from(
   namespace: '/chat',
   cors: {
     origin: gatewayAllowedOrigins,
-    credentials: true,
   },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
