@@ -57,6 +57,29 @@ async function bootstrap() {
   const PORT = process.env.PORT || 3000;
 
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000);
-  console.log('🔌 WebSocket: ws://localhost:' + PORT + '/chat');
+
+  // Compute a public-facing ws/wss URL for logs when possible.
+  const backendPublicRaw =
+    process.env.BACKEND_PUBLIC_URL || process.env.BACKEND_PUBLIC_HOST;
+  let wsUrl: string;
+  if (backendPublicRaw) {
+    // If the provided value contains a scheme, prefer it; otherwise assume https in production.
+    if (/^https?:\/\//i.test(backendPublicRaw)) {
+      wsUrl = backendPublicRaw.replace(
+        /^https?:/i,
+        backendPublicRaw.startsWith('https') ? 'wss' : 'ws',
+      );
+      // ensure path ends with /chat
+      if (!wsUrl.endsWith('/chat')) wsUrl = wsUrl.replace(/\/+$/, '') + '/chat';
+    } else {
+      // no scheme provided
+      const scheme = process.env.NODE_ENV === 'production' ? 'wss' : 'ws';
+      wsUrl = `${scheme}://${backendPublicRaw.replace(/\/+$/, '')}/chat`;
+    }
+  } else {
+    wsUrl = `ws://localhost:${PORT}/chat`;
+  }
+
+  console.log('🔌 WebSocket:', wsUrl);
 }
 bootstrap();

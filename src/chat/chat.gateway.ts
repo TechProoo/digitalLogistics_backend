@@ -12,15 +12,35 @@ import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { ChatMessageDto } from './dto/message.dto';
 
+// Build allowed origins from env + sensible defaults so deployed frontends (Netlify, Render, etc.) work.
+const gatewayDefaultOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'https://digital-delivery.netlify.app',
+  'https://digital-logistics-admin.netlify.app',
+];
+
+const gatewayEnvOriginsRaw = [
+  process.env.CORS_ORIGINS,
+  process.env.FRONTEND_URL,
+]
+  .filter(Boolean)
+  .join(',');
+
+const gatewayEnvOrigins = gatewayEnvOriginsRaw
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const gatewayAllowedOrigins = Array.from(
+  new Set([...gatewayDefaultOrigins, ...gatewayEnvOrigins]),
+);
+
 @WebSocketGateway({
   namespace: '/chat',
   cors: {
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'https://digital-delivery.netlify.app',
-      'https://digital-logistics-admin.netlify.app',
-    ],
+    origin: gatewayAllowedOrigins,
     credentials: true,
   },
 })
