@@ -17,18 +17,25 @@ export class GeminiAiService {
       );
     }
 
-    this.chatModel = new ChatGoogleGenerativeAI({
-      apiKey,
-      model: 'gemini-2.5-flash',
-      temperature: 0.7,
-      maxOutputTokens: 2048,
-    });
-    this.logger.log('✅ Gemini AI Service initialized successfully');
+    // Log minimal info about initialization (mask API key)
+    this.logger.log(`Initializing GeminiAiService with model=gemini-2.5-flash, temperature=0.7`);
+    try {
+      this.chatModel = new ChatGoogleGenerativeAI({
+        apiKey,
+        model: 'gemini-2.5-flash',
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      });
+      this.logger.log('✅ Gemini AI Service initialized successfully');
+    } catch (err: any) {
+      this.logger.error('Failed to initialize ChatGoogleGenerativeAI', err?.stack || err);
+      throw err;
+    }
   }
 
   async generateResponse(userMessage: string): Promise<string> {
     try {
-      this.logger.debug(`Generating response for "${userMessage}"`);
+      this.logger.debug('[GeminiAiService] Generating response', { preview: userMessage.slice(0, 240) });
 
       const systemPrompt = `You are a helpful and friendly customer service assistant for Digital Delivery, a logistics and delivery company.
 
@@ -47,29 +54,66 @@ export class GeminiAiService {
 
                     Tone: Professional, friendly, and helpful`;
 
-      const messages = [
-        new SystemMessage(systemPrompt),
-        new HumanMessage(userMessage),
-      ];
+      const messages = [new SystemMessage(systemPrompt), new HumanMessage(userMessage)];
 
-      const response = await this.chatModel.invoke(messages);
-      const responseText = response.content.toString();
-      this.logger.debug(`Response generated successfully`);
-      return responseText;
+      this.logger.debug('[GeminiAiService] invoking chat model', { messagesPreview: messages.map((m) => (m.text ? m.text.slice(0, 200) : '<sys>')) });
+
+      const response: any = await this.chatModel.invoke(messages);
+
+      // Debug raw response shape for easier troubleshooting
+      const safeStringify = (v: any) => {
+        try {
+          return JSON.stringify(v, (_k, val) => (typeof val === 'bigint' ? String(val) : val), 2);
+        } catch (e) {
+          return String(v);
+        }
+      };
+      this.logger.debug('[GeminiAiService] raw model response:', safeStringify(response));
+
+      // Robust extraction of text from different response shapes
+      let responseText = '';
+      if (!response) {
+        responseText = '';
+      } else if (typeof response === 'string') {
+        responseText = response;
+      } else if (response.content && typeof response.content === 'string') {
+        responseText = response.content;
+      } else if (response.content && typeof response.content?.toString === 'function') {
+        try {
+          responseText = response.content.toString();
+        } catch (_) {
+          responseText = safeStringify(response.content);
+        }
+      } else if (Array.isArray(response.output) && response.output.length > 0) {
+        // Common GenAI response shape: output -> [{ content: [{ type: 'text', text: '...' }] }]
+        try {
+          const first = response.output[0];
+          const text = first?.content?.[0]?.text || first?.text || null;
+          responseText = text || safeStringify(response);
+        } catch (_) {
+          responseText = safeStringify(response);
+        }
+      } else {
+        responseText = safeStringify(response);
+      }
+
+      this.logger.debug('[GeminiAiService] extracted responseText', { preview: responseText.slice(0, 1000) });
+      return String(responseText);
     } catch (error) {
-      this.logger.error(`Error generating response: ${error.message}`);
+      const e: any = error;
+      this.logger.error('[GeminiAiService] Error generating response', e?.stack || e);
+
+      const msg = (e && (e.message || String(e))) || 'Failed to generate AI response. Please try again.';
 
       // Handle specific errors
-      if (error.message.includes('quota')) {
-        throw new Error(
-          'Daily API limit reached (1,500 requests). Try again tomorrow!',
-        );
+      if (msg.toLowerCase().includes('quota')) {
+        throw new Error('Daily API limit reached. Try again later.');
       }
-      if (error.message.includes('rate limit')) {
+      if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('rate_limit')) {
         throw new Error('Too many requests. Please wait a moment.');
       }
 
-      throw new Error('Failed to generate AI response. Please try again.');
+      throw new Error(msg);
     }
   }
 }
