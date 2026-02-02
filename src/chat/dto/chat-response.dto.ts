@@ -4,6 +4,7 @@ export class ChatResponseDto {
   intent:
     | 'company_info'
     | 'pricing'
+    | 'quote'
     | 'general'
     | 'greeting'
     | 'help'
