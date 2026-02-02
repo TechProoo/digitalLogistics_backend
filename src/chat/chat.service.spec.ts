@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatService } from './chat.service';
 import { GeminiAiService } from '../gemini/gemini-ai.service';
-import { FreightosService } from '../freightos/freightos.service';
 import { ManualRateEngineService } from '../rates/manual-rate-engine.service';
 
 describe('ChatService', () => {
@@ -15,15 +14,6 @@ describe('ChatService', () => {
           provide: GeminiAiService,
           useValue: {
             generateResponse: jest.fn(async () => 'mock-ai-response'),
-          },
-        },
-        {
-          provide: FreightosService,
-          useValue: {
-            handleQuoteRequest: jest.fn(async () => ({
-              status: 'ok',
-              quote: { price: { amount: 1, currency: 'USD' }, transitDays: 1 },
-            })),
           },
         },
         {

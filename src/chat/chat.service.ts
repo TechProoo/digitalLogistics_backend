@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ChatMessageDto } from './dto/message.dto';
 import { ChatResponseDto } from './dto/chat-response.dto';
 import { GeminiAiService } from '../gemini/gemini-ai.service';
-import { FreightosService } from '../freightos/freightos.service';
 import { ManualRateEngineService } from '../rates/manual-rate-engine.service';
 
 type ChatIntent =
@@ -20,7 +19,6 @@ export class ChatService {
 
   constructor(
     private readonly geminiAiService: GeminiAiService,
-    private readonly freightosService: FreightosService,
     private readonly manualRates: ManualRateEngineService,
   ) {}
 
@@ -41,12 +39,6 @@ export class ChatService {
       } else if (intent === 'farewell') {
         responseMessage = this.handleFarewell();
       } else if (intent === 'quote') {
-        const quoteProvider = String(
-          process.env.QUOTE_PROVIDER || process.env.QUOTES_PROVIDER || 'manual',
-        )
-          .toLowerCase()
-          .trim();
-
         const buildClarification = (missingFields: string[]) => {
           responseMessage = this.buildClarificationQuestion(
             missingFields || [],
@@ -72,53 +64,6 @@ export class ChatService {
             data: { status: 'error' },
           };
         };
-
-        // Manual is the default (Freightos sandbox frequently returns 403)
-        if (quoteProvider === 'freightos') {
-          const quoteRes = await this.freightosService.handleQuoteRequest({
-            freeText: dto.message,
-          });
-
-          if (quoteRes.status === 'needs_clarification') {
-            return buildClarification(quoteRes.missingFields || []);
-          }
-          if (quoteRes.status === 'error') {
-            return buildError(quoteRes.message);
-          }
-
-          responseMessage = this.summarizeQuote(quoteRes.quote);
-          return {
-            message: responseMessage,
-            intent: 'quote',
-            timestamp: new Date(),
-            data: {
-              status: 'ok',
-              quote: quoteRes.quote,
-            },
-          };
-        }
-
-        if (quoteProvider === 'auto') {
-          // Try Freightos first, then fall back to manual.
-          const quoteRes = await this.freightosService.handleQuoteRequest({
-            freeText: dto.message,
-          });
-
-          if (quoteRes.status === 'ok') {
-            responseMessage = this.summarizeQuote(quoteRes.quote);
-            return {
-              message: responseMessage,
-              intent: 'quote',
-              timestamp: new Date(),
-              data: { status: 'ok', quote: quoteRes.quote },
-            };
-          }
-          if (quoteRes.status === 'needs_clarification') {
-            // If Freightos needs more info, ask for it rather than guessing.
-            return buildClarification(quoteRes.missingFields || []);
-          }
-          // else error -> fall back to manual
-        }
 
         const manualRes = await this.manualRates.estimate({
           freeText: dto.message,
@@ -208,7 +153,7 @@ export class ChatService {
       return 'pricing';
     }
 
-    // Quote / rate request (Freightos)
+    // Quote / rate request
     if (
       /\b(quote|rate|rates|freight|shipping quote|shipping rate|book a shipment)\b/i.test(
         message,
@@ -239,16 +184,8 @@ export class ChatService {
       containerType: 'container type (20ft/40ft/40hc)',
       distanceKm: 'distance in km (or say: from Lagos to Abuja)',
 
-      // Freightos fields
+      // Shared field
       weightKg: 'weight in kg',
-      serviceType: 'service type (air/ocean/land)',
-      quantity: 'quantity (e.g. 1)',
-      unitType: 'unit type (boxes/pallets/container20/container40/etc)',
-      unitVolumeCBM: 'unit volume in CBM (optional)',
-      originAirportCode: 'origin airport code (IATA, e.g. LOS)',
-      destinationAirportCode: 'destination airport code (IATA)',
-      originUnLocationCode: 'origin UN/LOCODE (e.g. CNSHA)',
-      destinationUnLocationCode: 'destination UN/LOCODE',
     };
 
     const needed = missing.map((m) => labels[m] || m);
@@ -260,7 +197,7 @@ export class ChatService {
     if (!quote) return 'I got a quote, but the details were empty.';
 
     const quoteCta =
-      "For a live and accurate quote, please visit the New Delivery page and send in a Quote request (we'll confirm live pricing and availability).";
+      "For a live and accurate quote, please visit the New Delivery page and submit a Quote Request. We'll confirm live pricing and availability.";
 
     // Manual rate engine shape
     if (quote?.provider === 'manual-rate-engine' && quote?.breakdown?.total) {
@@ -270,76 +207,53 @@ export class ChatService {
       const mode = String(quote.mode || '').toUpperCase();
       const chargeable = quote.chargeableWeightKg;
 
-      const subtotalAmount =
-        Math.round((Number(base?.amount || 0) + Number(sur?.amount || 0)) * 100) /
-        100;
-      const currency =
-        base?.currency || sur?.currency || quote.breakdown.total?.currency;
+      const formatNgn = (amount: unknown) => {
+        const n = Number(amount);
+        if (!Number.isFinite(n)) return '₦0.00';
+        return new Intl.NumberFormat('en-NG', {
+          style: 'currency',
+          currency: 'NGN',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(n);
+      };
 
-      const parts: string[] = [];
-      parts.push(
-        `${mode} estimate (minus margin): ${subtotalAmount} ${currency} (base ${base.amount} + surcharges ${sur.amount}).`,
+      const baseAmt = Number(base?.amount || 0);
+      const surAmt = Number(sur?.amount || 0);
+      const subtotal = Math.round((baseAmt + surAmt) * 100) / 100;
+
+      const lines: string[] = [];
+
+      lines.push(`${mode} estimate (excluding margin): ${formatNgn(subtotal)}`);
+      lines.push(
+        `(base ${formatNgn(baseAmt)} + surcharges ${formatNgn(surAmt)})`,
       );
+
       if (Number.isFinite(Number(chargeable))) {
-        parts.push(`Chargeable weight: ~${chargeable}kg.`);
+        lines.push(`Chargeable weight: ~${chargeable}kg`);
       }
 
-      if (Number.isFinite(Number(margin?.amount)) && Number(margin.amount) > 0) {
-        parts.push(
-          `Margin (not included above): ${margin.amount} ${currency} — service/handling markup (final live quote may include it).`,
+      if (
+        Number.isFinite(Number(margin?.amount)) &&
+        Number(margin.amount) > 0
+      ) {
+        lines.push('');
+        lines.push(
+          `Margin (not included above): ${formatNgn(margin.amount)} — service/handling markup`,
         );
+        lines.push('(final live quote may include this)');
       }
 
-      parts.push('Market-average estimate (not a carrier booking rate).');
-      parts.push(quoteCta);
-      return parts.join(' ');
+      lines.push('');
+      lines.push(
+        'This is a market-average estimate, not a carrier booking rate.',
+      );
+      lines.push(quoteCta);
+
+      return lines.join('\n');
     }
 
-    // Freightos Estimator response shape
-    if (quote?.provider === 'freightos-estimator' && quote?.response) {
-      const mode = String(quote.mode || '').toUpperCase();
-      const modeResp = quote.response?.[mode];
-      const min = modeResp?.priceEstimates?.min;
-      const max = modeResp?.priceEstimates?.max;
-      const tMin = modeResp?.transitTime?.min;
-      const tMax = modeResp?.transitTime?.max;
-
-      const pricePart =
-        Number.isFinite(min) && Number.isFinite(max)
-          ? `Estimated price: ${min}–${max} (USD).`
-          : 'Price estimate available.';
-      const transitPart =
-        Number.isFinite(tMin) && Number.isFinite(tMax)
-          ? `Transit: ~${tMin}–${tMax} days.`
-          : '';
-
-      const parts = [pricePart, transitPart].filter(Boolean);
-      parts.push(quoteCta);
-      return parts.join(' ');
-    }
-
-    // Handle our mock quote shape
-    const amount = quote?.price?.amount;
-    const currency = quote?.price?.currency;
-    const transitDays = quote?.transitDays;
-
-    const pricePart =
-      amount && currency ? `Estimated price: ${amount} ${currency}.` : '';
-    const transitPart = transitDays ? `Transit: ~${transitDays} days.` : '';
-
-    const isMock =
-      quote?.isMock === true || quote?.provider === 'mock-freightos';
-    const mockPart = isMock
-      ? 'Mock estimate (set FREIGHTOS_API_KEY for live rates).'
-      : '';
-
-    const parts = [pricePart, transitPart, mockPart].filter(Boolean);
-    if (parts.length) {
-      parts.push(quoteCta);
-      return parts.join(' ');
-    }
-
-    return `Quote received. I can share the full breakdown if you want. ${quoteCta}`;
+    return `Estimate received. I can share the full breakdown if you want. ${quoteCta}`;
   }
 
   private handleGreeting(): string {
