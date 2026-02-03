@@ -2,9 +2,9 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { Injectable, Logger } from '@nestjs/common';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import {
+  Annotation,
   END,
   MemorySaver,
-  MessagesAnnotation,
   START,
   StateGraph,
 } from '@langchain/langgraph';
@@ -49,9 +49,30 @@ export class GeminiAiService {
     // Build a tiny LangGraph that appends messages and checkpoints them in-memory.
     // This lets the agent remember previous turns for each thread_id.
     const systemPrompt = this.getSystemPrompt();
+
+    // IMPORTANT: MemorySaver stores the full state per thread_id in-process.
+    // If we keep appending forever, a long chat can eventually OOM the Node process.
+    // We cap message history with a reducer that trims to the last N messages.
+    const maxMemoryMessagesRaw = Number(process.env.GEMINI_MEMORY_MAX_MESSAGES);
+    const maxMemoryMessages = Number.isFinite(maxMemoryMessagesRaw)
+      ? Math.floor(maxMemoryMessagesRaw)
+      : 30;
+    const effectiveMaxMemoryMessages = Math.max(6, maxMemoryMessages);
+
+    const CappedMessagesState = Annotation.Root({
+      messages: Annotation<any[]>({
+        default: () => [],
+        reducer: (left, right) => {
+          const merged = [...(left || []), ...(right || [])];
+          if (merged.length <= effectiveMaxMemoryMessages) return merged;
+          return merged.slice(-effectiveMaxMemoryMessages);
+        },
+      }),
+    });
+
     // NOTE: LangGraph's advanced generics can overwhelm TS (TS2589).
     // We intentionally use `any` here to keep builds/tests stable.
-    const graph: any = new StateGraph(MessagesAnnotation as any)
+    const graph: any = new StateGraph(CappedMessagesState as any)
       .addNode('model', async (state) => {
         const response: any = await this.chatModel.invoke([
           new SystemMessage(systemPrompt),
