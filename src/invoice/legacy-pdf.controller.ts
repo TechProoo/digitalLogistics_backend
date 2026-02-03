@@ -10,16 +10,15 @@ import {
 } from '@nestjs/common';
 import { InvoiceService } from './invoice.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Response } from 'express';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
-@Controller('invoices')
-export class InvoiceController {
+@Controller('pdf')
+export class LegacyPdfController {
   constructor(private readonly invoiceService: InvoiceService) {}
 
   @SetMetadata('response_message', 'Invoice generated successfully.')
   @UseGuards(JwtAuthGuard)
-  @Get('shipments/:id/pdf')
+  @Get(':id')
   async invoice(
     @Param('id') id: string,
     @Req() req: Request & { user?: { customerId: string } },
@@ -36,11 +35,11 @@ export class InvoiceController {
         'Content-Length': pdfBuffer.length,
       });
 
-      res.status(HttpStatus.OK).send(pdfBuffer);
-    } catch (error) {
-      res.status(HttpStatus.NOT_FOUND).json({
+      return res.status(HttpStatus.OK).send(pdfBuffer);
+    } catch (error: any) {
+      return res.status(HttpStatus.NOT_FOUND).json({
         statusCode: HttpStatus.NOT_FOUND,
-        message: error.message,
+        message: error?.message || 'Not found',
       });
     }
   }
