@@ -14,6 +14,7 @@ describe('ChatService', () => {
           provide: GeminiAiService,
           useValue: {
             generateResponse: jest.fn(async () => 'mock-ai-response'),
+            generateResponseWithMemory: jest.fn(async () => 'mock-ai-response'),
           },
         },
         {

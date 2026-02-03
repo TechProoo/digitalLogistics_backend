@@ -89,8 +89,12 @@ export class ChatService {
       } else {
         // Use Gemini AI for complex questions
         this.logger.debug('🤖 Using Gemini AI...');
-        responseMessage = await this.geminiAiService.generateResponse(
+        const threadId =
+          String(dto.conversationId || dto.userId || 'default').trim() ||
+          'default';
+        responseMessage = await this.geminiAiService.generateResponseWithMemory(
           dto.message,
+          threadId,
         );
       }
 

@@ -75,6 +75,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const now = new Date().toISOString();
 
+      // Ensure we have a stable thread identifier for agent memory.
+      // Frontend may provide conversationId; otherwise fall back to socket client.id.
+      if (!dto.conversationId) {
+        dto.conversationId = client.id;
+      }
+      if (!dto.userId) {
+        dto.userId = client.id;
+      }
+
       // Count near-duplicate arrivals for the same client+message
       const key = `${client.id}:${dto.message}`;
       const cur = (this.recentMessageCounts.get(key) || 0) + 1;
