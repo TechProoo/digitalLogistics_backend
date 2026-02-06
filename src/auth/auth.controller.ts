@@ -112,7 +112,10 @@ export class AuthController {
     return { ok: true };
   }
 
-  @SetMetadata('response_message', 'If the email exists, a reset link was sent.')
+  @SetMetadata(
+    'response_message',
+    'If the email exists, a reset link was sent.',
+  )
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);

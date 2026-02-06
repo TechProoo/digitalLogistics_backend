@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -19,6 +20,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(dto: CreateAuthDto) {
@@ -141,19 +143,25 @@ export class AuthService {
       ? `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(token)}`
       : undefined;
 
+    const isProd = process.env.NODE_ENV === 'production';
+
     if (resetLink) {
-      // Replace with email provider when available.
-      // For now, log to server output for easy testing.
-      // eslint-disable-next-line no-console
-      console.log(`[Password Reset] ${customer.email}: ${resetLink}`);
-    } else {
+      const sent = await this.emailService.sendPasswordResetEmail(
+        customer.email,
+        resetLink,
+      );
+
+      if (!sent && !isProd) {
+        // eslint-disable-next-line no-console
+        console.log(`[Password Reset] ${customer.email}: ${resetLink}`);
+      }
+    } else if (!isProd) {
       // eslint-disable-next-line no-console
       console.log(
         `[Password Reset] FRONTEND_URL not set; token generated for ${customer.email}`,
       );
     }
 
-    const isProd = process.env.NODE_ENV === 'production';
     return isProd ? { ok: true } : { ok: true, resetLink };
   }
 
