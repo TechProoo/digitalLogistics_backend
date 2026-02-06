@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
@@ -12,6 +14,7 @@ import { LoginDto } from './dto/login.dto';
 @Injectable()
 export class AuthService {
   private static readonly SALT_ROUNDS = 10;
+  private static readonly RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
   constructor(
     private readonly prisma: PrismaService,
@@ -102,5 +105,90 @@ export class AuthService {
     });
 
     return { customer };
+  }
+
+  private hashResetToken(token: string) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  async forgotPassword(emailRaw: string) {
+    const email = emailRaw.trim().toLowerCase();
+
+    const customer = await this.prisma.customer.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
+
+    // Always return ok (avoid user enumeration)
+    if (!customer) {
+      return { ok: true };
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashResetToken(token);
+    const expiresAt = new Date(Date.now() + AuthService.RESET_TOKEN_TTL_MS);
+
+    await this.prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        resetPasswordTokenHash: tokenHash,
+        resetPasswordTokenExpires: expiresAt,
+      },
+    });
+
+    const frontendUrl = (process.env.FRONTEND_URL ?? '').trim();
+    const resetLink = frontendUrl
+      ? `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(token)}`
+      : undefined;
+
+    if (resetLink) {
+      // Replace with email provider when available.
+      // For now, log to server output for easy testing.
+      // eslint-disable-next-line no-console
+      console.log(`[Password Reset] ${customer.email}: ${resetLink}`);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[Password Reset] FRONTEND_URL not set; token generated for ${customer.email}`,
+      );
+    }
+
+    const isProd = process.env.NODE_ENV === 'production';
+    return isProd ? { ok: true } : { ok: true, resetLink };
+  }
+
+  async resetPassword(tokenRaw: string, newPassword: string) {
+    const token = tokenRaw.trim();
+    if (!token) throw new BadRequestException('Token is required.');
+
+    const tokenHash = this.hashResetToken(token);
+
+    const customer = await this.prisma.customer.findFirst({
+      where: {
+        resetPasswordTokenHash: tokenHash,
+        resetPasswordTokenExpires: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+
+    if (!customer) {
+      throw new BadRequestException('Invalid or expired reset token.');
+    }
+
+    const passwordHash = await bcrypt.hash(
+      newPassword,
+      AuthService.SALT_ROUNDS,
+    );
+
+    await this.prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        passwordHash,
+        resetPasswordTokenHash: null,
+        resetPasswordTokenExpires: null,
+      },
+    });
+
+    return { ok: true };
   }
 }
