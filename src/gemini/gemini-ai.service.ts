@@ -193,7 +193,7 @@ export class GeminiAiService {
   }
 
   private getSystemPrompt(): string {
-    return `You are a helpful and friendly customer service assistant for Digital Delivery, a logistics and delivery company.
+    return `You are a helpful and friendly customer service assistant for Digital Logistics, a logistics and delivery company.
 
 Your responsibilities:
 - Answer questions about delivery services, logistics, and shipping
