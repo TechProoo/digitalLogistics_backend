@@ -80,6 +80,12 @@ export class AuthService {
 
     if (!customer) throw new UnauthorizedException("User doesn't exist");
 
+    if (!customer.passwordHash) {
+      throw new UnauthorizedException(
+        'This account does not have a password. Please sign in with Google.',
+      );
+    }
+
     const ok = await bcrypt.compare(dto.password, customer.passwordHash);
     if (!ok) throw new UnauthorizedException('Invalid password.');
 
@@ -107,6 +113,49 @@ export class AuthService {
     });
 
     return { customer };
+  }
+
+  async googleLogin(args: { email: string; name?: string | null }) {
+    const email = args.email.trim().toLowerCase();
+    const name = (args.name ?? '').trim() || 'Customer';
+
+    const existing = await this.prisma.customer.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const customer =
+      existing ??
+      (await this.prisma.customer.create({
+        data: {
+          name,
+          email,
+          phone: null,
+          passwordHash: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }));
+
+    const accessToken = await this.jwtService.signAsync({
+      sub: customer.id,
+      email: customer.email,
+    });
+
+    return { accessToken, customer };
   }
 
   private hashResetToken(token: string) {

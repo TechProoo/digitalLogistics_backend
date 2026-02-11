@@ -35,6 +35,10 @@
   - Example: `https://digital-delivery.netlify.app,http://localhost:5173`
   - If omitted, the server allows a small default set (see [src/main.ts](src/main.ts)).
 - `FRONTEND_URL`: Optional single origin to allow (merged into `CORS_ORIGINS`).
+- `GOOGLE_CLIENT_ID`: Google OAuth client ID.
+- `GOOGLE_CLIENT_SECRET`: Google OAuth client secret.
+- `GOOGLE_CALLBACK_URL`: Must match the authorized redirect URI in Google console.
+  - Local example: `http://localhost:3000/auth/google/callback`
 
 ```bash
 $ npm install

@@ -30,7 +30,7 @@ model Customer {
   name      String?
   email     String   @unique
   phone     String?
-  passwordHash String @db.VarChar(60)
+  passwordHash String? @db.VarChar(60)
   resetPasswordTokenHash String? @db.VarChar(64)
   resetPasswordTokenExpires DateTime?
   createdAt DateTime @default(now())

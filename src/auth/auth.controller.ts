@@ -16,8 +16,10 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 type AuthedRequest = Request & { user?: { customerId: string; email: string } };
+type GoogleRequest = Request & { user?: { email: string; name?: string } };
 
 function parseExpiresInToMs(input: string | undefined): number {
   const fallback = 7 * 24 * 60 * 60 * 1000;
@@ -39,31 +41,48 @@ function parseExpiresInToMs(input: string | undefined): number {
   return value * (multipliers[unit] ?? 0) || fallback;
 }
 
-function getCookieOptions() {
+function getCookieOptions(req?: Request) {
   const isProd = process.env.NODE_ENV === 'production';
+
+  const originRaw = (req?.headers?.origin as string | undefined) ?? '';
+  const origin = originRaw.trim().toLowerCase();
+  const isLocalOrigin =
+    origin.startsWith('http://localhost') ||
+    origin.startsWith('http://127.0.0.1');
 
   const sameSiteEnv = process.env.COOKIE_SAMESITE?.toLowerCase();
   const hasExplicitSameSite =
     sameSiteEnv === 'none' || sameSiteEnv === 'strict' || sameSiteEnv === 'lax';
 
-  // For Netlify -> Render (different origins), browsers require SameSite=None for cookies
+  // For cross-site frontends, browsers require SameSite=None + Secure=true for cookies
   // to be included on XHR/fetch requests.
+  const originsHint = String(
+    (process.env.FRONTEND_URL ?? process.env.CORS_ORIGINS ?? '').trim(),
+  );
+
   const inferredCrossSite =
-    isProd &&
-    Boolean(process.env.FRONTEND_URL || process.env.CORS_ORIGINS) &&
-    !String(
-      process.env.FRONTEND_URL ?? process.env.CORS_ORIGINS ?? '',
-    ).includes('localhost');
+    Boolean(originsHint) &&
+    // If the only origin is the backend itself, it's not cross-site.
+    !originsHint.includes('http://localhost:3000') &&
+    !originsHint.includes('https://localhost:3000');
 
   const sameSite: 'lax' | 'strict' | 'none' = hasExplicitSameSite
     ? (sameSiteEnv as 'lax' | 'strict' | 'none')
-    : inferredCrossSite
-      ? 'none'
-      : 'lax';
+    : isLocalOrigin
+      ? 'lax'
+      : inferredCrossSite
+        ? 'none'
+        : 'lax';
 
   const secureEnv = process.env.COOKIE_SECURE?.toLowerCase();
   const secure =
-    sameSite === 'none' ? true : secureEnv === 'true' ? true : isProd;
+    secureEnv === 'true'
+      ? true
+      : secureEnv === 'false'
+        ? false
+        : sameSite === 'none'
+          ? true
+          : isProd;
 
   return {
     httpOnly: true,
@@ -82,10 +101,11 @@ export class AuthController {
   @Post('register')
   async register(
     @Body() dto: CreateAuthDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.register(dto);
-    res.cookie('dd_access_token', result.accessToken, getCookieOptions());
+    res.cookie('dd_access_token', result.accessToken, getCookieOptions(req));
     return { customer: result.customer, accessToken: result.accessToken };
   }
 
@@ -93,17 +113,18 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() dto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.login(dto);
-    res.cookie('dd_access_token', result.accessToken, getCookieOptions());
+    res.cookie('dd_access_token', result.accessToken, getCookieOptions(req));
     return { customer: result.customer, accessToken: result.accessToken };
   }
 
   @SetMetadata('response_message', 'Logged out successfully.')
   @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
-    const opts = getCookieOptions();
+  logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const opts = getCookieOptions(req);
     res.clearCookie('dd_access_token', {
       path: opts.path,
       sameSite: opts.sameSite,
@@ -132,5 +153,36 @@ export class AuthController {
   @Get('me')
   me(@Req() req: AuthedRequest) {
     return this.authService.me(req.user!.customerId);
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  google() {
+    // Passport will redirect to Google.
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(@Req() req: GoogleRequest, @Res() res: Response) {
+    const user = req.user;
+    if (!user?.email) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const result = await this.authService.googleLogin({
+      email: user.email,
+      name: user.name,
+    });
+
+    res.cookie('dd_access_token', result.accessToken, getCookieOptions(req));
+
+    const host = String(req.headers.host ?? '').toLowerCase();
+    const isLocalBackend =
+      host.startsWith('localhost') || host.startsWith('127.0.0.1');
+
+    const frontendUrl = (process.env.FRONTEND_URL ?? '').trim();
+    const redirectBase = isLocalBackend ? 'http://localhost:5173' : frontendUrl;
+
+    return res.redirect(`${redirectBase.replace(/\/$/, '')}/dashboard`);
   }
 }
