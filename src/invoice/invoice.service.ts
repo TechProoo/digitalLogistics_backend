@@ -48,7 +48,7 @@ export class InvoiceService {
       throw new NotFoundException('Shipment not found');
     }
 
-    const companyName = process.env.INVOICE_COMPANY_NAME || 'Digital Logistics';
+    const companyName = process.env.INVOICE_COMPANY_NAME || 'Digital Delivery';
     const companyAddress =
       process.env.INVOICE_COMPANY_ADDRESS ||
       'Fast, secure and reliable logistics across Nigeria.';

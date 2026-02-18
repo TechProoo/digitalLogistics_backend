@@ -37,6 +37,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-socket.io": "^10.4.22",
+    "@nestjs/throttler": "^6.4.0",
     "@nestjs/websockets": "^10.4.22",
     "@prisma/client": "^6.19.1",
     "@types/pdfkit": "^0.17.4",

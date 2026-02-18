@@ -181,7 +181,10 @@ export class AuthController {
       host.startsWith('localhost') || host.startsWith('127.0.0.1');
 
     const frontendUrl = (process.env.FRONTEND_URL ?? '').trim();
-    const redirectBase = isLocalBackend ? 'http://localhost:5173' : frontendUrl;
+    const fallbackFrontendUrl = 'https://digitaldelivery.org';
+    const redirectBase = isLocalBackend
+      ? 'http://localhost:5173'
+      : frontendUrl || fallbackFrontendUrl;
 
     return res.redirect(`${redirectBase.replace(/\/$/, '')}/dashboard`);
   }

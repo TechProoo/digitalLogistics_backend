@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
@@ -60,21 +61,24 @@ export class ShipmentsService {
       throw new BadRequestException('Destination location is required');
     }
 
+    const data: Prisma.ShipmentUncheckedCreateInput = {
+      trackingId,
+      customerId: createShipmentDto.customerId,
+      serviceType: createShipmentDto.serviceType,
+      pickupLocation,
+      destinationLocation,
+      packageType: createShipmentDto.packageType,
+      weight: createShipmentDto.weight,
+      dimensions: createShipmentDto.dimensions,
+      phone: createShipmentDto.phone,
+      receiverPhone: createShipmentDto.receiverPhone,
+      declaredValueNgn: createShipmentDto.declaredValueNgn,
+      amount: createShipmentDto.amount,
+      status: 'PENDING',
+    };
+
     const shipment = await this.prisma.shipment.create({
-      data: {
-        trackingId,
-        customerId: createShipmentDto.customerId,
-        serviceType: createShipmentDto.serviceType,
-        pickupLocation,
-        destinationLocation,
-        packageType: createShipmentDto.packageType,
-        weight: createShipmentDto.weight,
-        dimensions: createShipmentDto.dimensions,
-        phone: createShipmentDto.phone,
-        receiverPhone: createShipmentDto.receiverPhone,
-        amount: createShipmentDto.amount,
-        status: 'PENDING',
-      },
+      data,
       include: {
         customer: {
           select: {

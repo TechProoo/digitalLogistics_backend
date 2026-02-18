@@ -1,17 +1,29 @@
 import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
 import { ResponseInterceptor } from './auth/interceptors/response.interceptors';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // If behind a proxy/LB (Render, Nginx, Cloudflare), this is required so req.ip is correct.
+  // It also ensures throttling behaves as expected.
+  app.set('trust proxy', 1);
+
+  // Request size limits to prevent huge payload crashes.
+  const bodyLimit = (process.env.REQUEST_BODY_LIMIT || '1mb').trim();
+  app.useBodyParser('json', { limit: bodyLimit });
+  app.useBodyParser('urlencoded', { extended: true, limit: bodyLimit });
 
   const defaultAllowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:3000',
+    'https://digitaldelivery.org',
+    'https://www.digitaldelivery.org',
     'https://digital-delivery.netlify.app',
     'https://digital-logistics-admin.netlify.app',
   ];

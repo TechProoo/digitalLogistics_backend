@@ -100,6 +100,12 @@ export class CreateShipmentDto {
   @IsOptional()
   receiverPhone?: string;
 
+  /** Declared item value in Nigerian Naira (whole number). */
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  declaredValueNgn?: number;
+
   @IsInt()
   @Min(0)
   @IsOptional()

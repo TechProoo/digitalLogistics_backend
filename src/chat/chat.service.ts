@@ -262,7 +262,7 @@ export class ChatService {
 
   private handleGreeting(): string {
     const greetings = [
-      'Hello! 👋 Welcome to DigitalLogistics! How can I help you today?',
+      'Hello! 👋 Welcome to DigitalDelivery! How can I help you today?',
       'Hi there! 😊 What can I do for you?',
       'Hey! 🌟 How may I assist you?',
     ];
@@ -270,7 +270,7 @@ export class ChatService {
   }
 
   private handleHelp(): string {
-    return `I'm your Digital Logistics AI assistant! 🤖
+    return `I'm your Digital Delivery AI assistant! 🤖
 
 I can help with:
 💬 General questions about our services

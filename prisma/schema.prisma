@@ -58,6 +58,10 @@ model Shipment {
   dimensions  String
   phone       String
   receiverPhone String?
+
+  // Declared item value in Nigerian Naira (whole number)
+  declaredValueNgn Int        @default(0)
+
   // Amount in Nigerian Naira (whole number)
   amount      Int            @default(0)
 
