@@ -60,7 +60,7 @@ model Shipment {
   receiverPhone String?
 
   // Declared item value in Nigerian Naira (whole number)
-  declaredValueNgn Int        @default(0)
+  declaredValueNgn Int?
 
   // Amount in Nigerian Naira (whole number)
   amount      Int            @default(0)

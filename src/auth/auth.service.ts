@@ -202,13 +202,9 @@ export class AuthService {
 
       if (!sent && !isProd) {
         // eslint-disable-next-line no-console
-        console.log(`[Password Reset] ${customer.email}: ${resetLink}`);
       }
     } else if (!isProd) {
       // eslint-disable-next-line no-console
-      console.log(
-        `[Password Reset] FRONTEND_URL not set; token generated for ${customer.email}`,
-      );
     }
 
     return isProd ? { ok: true } : { ok: true, resetLink };

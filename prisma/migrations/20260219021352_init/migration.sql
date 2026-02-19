@@ -1,6 +1,3 @@
-﻿-- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "ShipmentStatus" AS ENUM ('PENDING', 'QUOTED', 'ACCEPTED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED');
 
@@ -13,7 +10,9 @@ CREATE TABLE "Customer" (
     "name" TEXT,
     "email" TEXT NOT NULL,
     "phone" TEXT,
-    "passwordHash" VARCHAR(60) NOT NULL,
+    "passwordHash" VARCHAR(60),
+    "resetPasswordTokenHash" VARCHAR(64),
+    "resetPasswordTokenExpires" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -34,6 +33,7 @@ CREATE TABLE "Shipment" (
     "dimensions" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "receiverPhone" TEXT,
+    "declaredValueNgn" INTEGER NOT NULL DEFAULT 0,
     "amount" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -83,6 +83,9 @@ CREATE UNIQUE INDEX "Customer_email_key" ON "Customer"("email");
 CREATE INDEX "Customer_name_idx" ON "Customer"("name");
 
 -- CreateIndex
+CREATE INDEX "Customer_resetPasswordTokenHash_idx" ON "Customer"("resetPasswordTokenHash");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Shipment_trackingId_key" ON "Shipment"("trackingId");
 
 -- CreateIndex
@@ -123,4 +126,3 @@ ALTER TABLE "ShipmentCheckpoint" ADD CONSTRAINT "ShipmentCheckpoint_shipmentId_f
 
 -- AddForeignKey
 ALTER TABLE "ShipmentNote" ADD CONSTRAINT "ShipmentNote_shipmentId_fkey" FOREIGN KEY ("shipmentId") REFERENCES "Shipment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

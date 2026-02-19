@@ -91,7 +91,5 @@ async function bootstrap() {
   } else {
     wsUrl = `ws://localhost:${PORT}/chat`;
   }
-
-  console.log('🔌 WebSocket:', wsUrl);
 }
 bootstrap();
