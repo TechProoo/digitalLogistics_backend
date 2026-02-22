@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { DriverApplicationStatus, DriverStatus, Prisma } from '@prisma/client';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
@@ -276,6 +276,55 @@ export class ShipmentsService {
     });
 
     return shipment;
+  }
+
+  async assignDriver(shipmentId: string, driverId: string) {
+    if (!driverId || typeof driverId !== 'string') {
+      throw new BadRequestException('driverId is required');
+    }
+
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+      select: { id: true, driverId: true },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    if (shipment.driverId) {
+      throw new BadRequestException('Shipment already assigned');
+    }
+
+    const driver = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+      select: { id: true, applicationStatus: true, status: true },
+    });
+
+    if (!driver) {
+      throw new NotFoundException('Driver not found');
+    }
+
+    if (driver.applicationStatus !== DriverApplicationStatus.APPROVED) {
+      throw new BadRequestException('Driver is not approved');
+    }
+
+    if (driver.status !== DriverStatus.AVAILABLE) {
+      throw new BadRequestException('Driver is not available');
+    }
+
+    const [updatedShipment] = await this.prisma.$transaction([
+      this.prisma.shipment.update({
+        where: { id: shipmentId },
+        data: { driverId },
+      }),
+      this.prisma.driver.update({
+        where: { id: driverId },
+        data: { status: DriverStatus.BUSY },
+      }),
+    ]);
+
+    return updatedShipment;
   }
 
   async addCheckpoint(id: string, addCheckpointDto: AddCheckpointDto) {

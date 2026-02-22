@@ -19,6 +19,10 @@ import { AddCheckpointDto } from './dto/add-checkpoint.dto';
 import { AddNoteDto } from './dto/add-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+type AssignDriverDto = {
+  driverId: string;
+};
+
 @Controller('shipments')
 export class ShipmentsController {
   constructor(private readonly shipmentsService: ShipmentsService) {}
@@ -72,6 +76,12 @@ export class ShipmentsController {
     @Body() updateStatusDto: UpdateShipmentStatusDto,
   ) {
     return this.shipmentsService.updateStatus(id, updateStatusDto);
+  }
+
+  @SetMetadata('response_message', 'Shipment assigned successfully.')
+  @Patch(':id/assign')
+  assignDriver(@Param('id') id: string, @Body() body: AssignDriverDto) {
+    return this.shipmentsService.assignDriver(id, body.driverId);
   }
 
   @SetMetadata('response_message', 'Checkpoint added successfully.')

@@ -25,6 +25,25 @@ enum ServiceType {
   DOOR_TO_DOOR
 }
 
+enum VehicleType {
+  VAN
+  BIKE
+}
+
+enum DriverApplicationStatus {
+  PENDING
+  NEEDS_INFO
+  APPROVED
+  REJECTED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+  SUSPENDED
+}
+
 model Customer {
   id        String   @id @default(uuid())
   name      String?
@@ -50,6 +69,9 @@ model Shipment {
   serviceType ServiceType
   status      ShipmentStatus @default(PENDING)
 
+  driverId String?
+  driver   Driver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+
   pickupLocation      String
   destinationLocation String
 
@@ -74,6 +96,7 @@ model Shipment {
 
   @@index([customerId])
   @@index([status])
+  @@index([driverId])
   @@index([createdAt])
 }
 
@@ -113,4 +136,44 @@ model ShipmentNote {
 
   @@index([shipmentId])
   @@index([shipmentId, timestamp])
+}
+
+model Driver {
+  id String @id @default(uuid())
+
+  vehicleType VehicleType
+  plateNumber String
+
+  applicationStatus DriverApplicationStatus @default(PENDING)
+  status DriverStatus @default(OFFLINE)
+
+  proofOfOwnershipPath String
+  vehicleLicensePath   String
+  hackneyPermitPath    String
+  vehicleInsurancePath String
+  vehicleVideoPath     String
+
+  driversLicensePath String
+  meansOfIdPath      String
+
+  driverName          String
+  driverAddress       String
+  driverFacePhotoPath String
+  driverFullBodyPhotoPath String
+
+  guarantorName        String
+  guarantorAddress     String
+  guarantorPhone       String
+  guarantorNin         String
+  guarantorMeansOfIdPath String
+
+  shipments Shipment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vehicleType])
+  @@index([applicationStatus])
+  @@index([status])
+  @@index([createdAt])
 }

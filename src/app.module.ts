@@ -10,6 +10,7 @@ import { ChatModule } from './chat/chat.module';
 import { RatesModule } from './rates/rates.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { CustomThrottlerGuard } from './throttling/custom-throttler.guard';
+import { DriversModule } from './drivers/drivers.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -25,6 +26,7 @@ import { CustomThrottlerGuard } from './throttling/custom-throttler.guard';
     ChatModule,
     RatesModule,
     InvoiceModule,
+    DriversModule,
   ],
   controllers: [AppController],
   providers: [

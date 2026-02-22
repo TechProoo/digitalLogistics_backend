@@ -3,11 +3,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
+import { join } from 'path';
 import { ResponseInterceptor } from './auth/interceptors/response.interceptors';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Serve uploaded files (driver documents, etc.)
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+  });
 
   // If behind a proxy/LB (Render, Nginx, Cloudflare), this is required so req.ip is correct.
   // It also ensures throttling behaves as expected.
