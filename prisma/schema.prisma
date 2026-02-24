@@ -28,6 +28,8 @@ enum ServiceType {
 enum VehicleType {
   VAN
   BIKE
+  LORRY
+  TRUCK
 }
 
 enum DriverApplicationStatus {

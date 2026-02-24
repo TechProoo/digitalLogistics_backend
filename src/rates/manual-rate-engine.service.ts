@@ -188,9 +188,20 @@ export class ManualRateEngineService {
     req.mode = mode ?? undefined;
     if (!mode) missing.push('mode');
 
-    if (mode === 'parcel' || mode === 'air' || mode === 'ocean') {
-      if (!req.origin) missing.push('origin');
-      if (!req.destination) missing.push('destination');
+    if (!req.origin) missing.push('origin');
+    if (!req.destination) missing.push('destination');
+
+    // Reject same-location requests early
+    if (
+      req.origin &&
+      req.destination &&
+      req.origin.toLowerCase().trim() === req.destination.toLowerCase().trim()
+    ) {
+      return {
+        status: 'error',
+        message:
+          'Origin and destination cannot be the same location. Please provide different addresses.',
+      };
     }
 
     if (mode === 'parcel' || mode === 'air') {
@@ -324,15 +335,30 @@ export class ManualRateEngineService {
           );
         }
 
+        // Use chargeable weight (actual vs volumetric)
+        const volKgParcel = this.calculateVolumetricKg(
+          req,
+          this.volumeDivisorParcel,
+        );
+        const chargeableKg = Math.max(
+          weightKg,
+          Number.isFinite(volKgParcel) ? volKgParcel : 0,
+        );
+        if (Number.isFinite(volKgParcel) && volKgParcel > weightKg) {
+          assumptions.push(
+            `Volumetric weight used: ${round2(volKgParcel)} kg (actual ${weightKg} kg, divisor ${this.volumeDivisorParcel})`,
+          );
+        }
+
         // Weight tiers (incremental, not stepped)
         let wtFactor = 1.0;
-        if (weightKg > 30) wtFactor = 3.5;
-        else if (weightKg > 20) wtFactor = 2.8;
-        else if (weightKg > 10) wtFactor = 2.0;
-        else if (weightKg > 5) wtFactor = 1.5;
-        else if (weightKg > 1) wtFactor = 1.2;
+        if (chargeableKg > 30) wtFactor = 3.5;
+        else if (chargeableKg > 20) wtFactor = 2.8;
+        else if (chargeableKg > 10) wtFactor = 2.0;
+        else if (chargeableKg > 5) wtFactor = 1.5;
+        else if (chargeableKg > 1) wtFactor = 1.2;
         assumptions.push(
-          `Weight factor applied: ×${wtFactor} for ${weightKg} kg`,
+          `Weight factor applied: ×${wtFactor} for ${round2(chargeableKg)} kg (chargeable)`,
         );
 
         baseNgn *= wtFactor;
@@ -355,13 +381,28 @@ export class ManualRateEngineService {
           `Origin region: ${originRegion} | Destination region: ${destRegion}`,
         );
 
-        // Base rate in USD by weight bracket
+        // Use chargeable weight (actual vs volumetric)
+        const volKgIntl = this.calculateVolumetricKg(
+          req,
+          this.volumeDivisorParcel,
+        );
+        const chargeableKgIntl = Math.max(
+          weightKg,
+          Number.isFinite(volKgIntl) ? volKgIntl : 0,
+        );
+        if (Number.isFinite(volKgIntl) && volKgIntl > weightKg) {
+          assumptions.push(
+            `Volumetric weight used: ${round2(volKgIntl)} kg (actual ${weightKg} kg, divisor ${this.volumeDivisorParcel})`,
+          );
+        }
+
+        // Base rate in USD by weight bracket (using chargeable weight)
         let baseUsd = 0;
-        if (weightKg <= 0.5) baseUsd = 35;
-        else if (weightKg <= 1) baseUsd = 50;
-        else if (weightKg <= 5) baseUsd = 65;
-        else if (weightKg <= 10) baseUsd = 115;
-        else if (weightKg <= 30) baseUsd = 215;
+        if (chargeableKgIntl <= 0.5) baseUsd = 35;
+        else if (chargeableKgIntl <= 1) baseUsd = 50;
+        else if (chargeableKgIntl <= 5) baseUsd = 65;
+        else if (chargeableKgIntl <= 10) baseUsd = 115;
+        else if (chargeableKgIntl <= 30) baseUsd = 215;
         else baseUsd = 350;
 
         // Regional adjustment multiplier on the base
