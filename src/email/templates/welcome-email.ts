@@ -6,6 +6,7 @@ import {
   Head,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -16,6 +17,7 @@ export type WelcomeEmailProps = {
   name?: string | null;
   appUrl: string;
   supportEmail: string;
+  logoUrl: string;
 };
 
 function normalizeBaseUrl(url: string) {
@@ -106,6 +108,13 @@ export function WelcomeEmail(props: WelcomeEmailProps): React.ReactElement {
     margin: '0',
   } as const;
 
+  const logo = {
+    display: 'block',
+    margin: '0 auto',
+    height: '34px',
+    width: 'auto',
+  } as const;
+
   return React.createElement(
     Html,
     { lang: 'en' },
@@ -120,6 +129,15 @@ export function WelcomeEmail(props: WelcomeEmailProps): React.ReactElement {
         React.createElement(
           Section,
           null,
+          React.createElement(
+            Section,
+            { style: { marginBottom: '18px', textAlign: 'center' as const } },
+            React.createElement(Img, {
+              src: props.logoUrl,
+              alt: 'Digital Delivery',
+              style: logo,
+            }),
+          ),
           React.createElement(
             Text,
             { style: h1 },

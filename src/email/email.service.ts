@@ -10,6 +10,17 @@ export class EmailService {
   private readonly from: string;
   private readonly replyTo?: string;
 
+  private getLogoUrl(): string {
+    const explicit = (process.env.EMAIL_LOGO_URL ?? '').trim();
+    if (explicit) return explicit;
+
+    const base = (process.env.FRONTEND_URL ?? 'https://digitaldelivery.org')
+      .trim()
+      .replace(/\/+$/, '');
+
+    return `${base}/logo.png`;
+  }
+
   constructor() {
     const apiKey = (process.env.RESEND_API_KEY ?? '').trim();
     this.resend = apiKey ? new Resend(apiKey) : null;
@@ -37,8 +48,13 @@ export class EmailService {
     const subject = 'Reset your Digital Delivery password';
     const text = `Reset your password using this link: ${resetLink}`;
 
+    const logoUrl = this.getLogoUrl();
+
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+        <div style="text-align:center;margin-bottom:18px;">
+          <img src="${logoUrl}" alt="Digital Delivery" style="height:34px;width:auto;" />
+        </div>
         <h2>Password reset</h2>
         <p>You requested a password reset. Click the button below to set a new password:</p>
         <p>
@@ -82,18 +98,21 @@ export class EmailService {
 
     const supportEmail = 'support@digitaldelivery.org';
     const appUrl = (args.appUrl ?? process.env.FRONTEND_URL ?? '').trim();
+    const logoUrl = this.getLogoUrl();
 
     const subject = 'Welcome to Digital Delivery';
     const text = welcomeEmailText({
       name: args.name,
       appUrl,
       supportEmail,
+      logoUrl,
     });
 
     const react = React.createElement(WelcomeEmail, {
       name: args.name,
       appUrl,
       supportEmail,
+      logoUrl,
     });
 
     try {
