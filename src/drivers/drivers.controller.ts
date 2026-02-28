@@ -67,8 +67,8 @@ export class DriversController {
           },
         }),
         limits: {
-          // Keep this conservative; adjust if you expect larger video files.
-          fileSize: 50 * 1024 * 1024,
+          // 100 MB per file to accommodate 1-minute vehicle videos.
+          fileSize: 100 * 1024 * 1024,
         },
       },
     ),
