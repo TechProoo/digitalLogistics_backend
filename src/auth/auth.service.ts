@@ -158,6 +158,16 @@ export class AuthService {
         },
       }));
 
+    if (!existing) {
+      // Fire-and-forget welcome email; never block login on email delivery.
+      this.emailService
+        .sendWelcomeEmail(customer.email, {
+          name: customer.name,
+          appUrl: process.env.FRONTEND_URL,
+        })
+        .catch(() => undefined);
+    }
+
     const accessToken = await this.jwtService.signAsync({
       sub: customer.id,
       email: customer.email,
