@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
+import * as React from 'react';
+import { WelcomeEmail, welcomeEmailText } from './templates/welcome-email';
 
 @Injectable()
 export class EmailService {
@@ -17,7 +19,7 @@ export class EmailService {
     this.from =
       fromName && fromEmail
         ? `${fromName} <${fromEmail}>`
-        : fromEmail || 'onboarding@resend.dev';
+        : fromEmail || 'Digital Delivery <noreply@digitaldelivery.org>';
 
     const replyTo = (process.env.RESEND_REPLY_TO ?? '').trim();
     this.replyTo = replyTo || undefined;
@@ -65,6 +67,47 @@ export class EmailService {
         'Failed to send password reset email via Resend.',
         err as any,
       );
+      return false;
+    }
+  }
+
+  async sendWelcomeEmail(
+    to: string,
+    args: { name?: string | null; appUrl?: string },
+  ): Promise<boolean> {
+    if (!this.resend) {
+      this.logger.warn('RESEND_API_KEY not set; skipping email send.');
+      return false;
+    }
+
+    const supportEmail = 'support@digitaldelivery.org';
+    const appUrl = (args.appUrl ?? process.env.FRONTEND_URL ?? '').trim();
+
+    const subject = 'Welcome to Digital Delivery';
+    const text = welcomeEmailText({
+      name: args.name,
+      appUrl,
+      supportEmail,
+    });
+
+    const react = React.createElement(WelcomeEmail, {
+      name: args.name,
+      appUrl,
+      supportEmail,
+    });
+
+    try {
+      await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        react,
+        text,
+        ...(this.replyTo ? { reply_to: this.replyTo } : {}),
+      });
+      return true;
+    } catch (err) {
+      this.logger.error('Failed to send welcome email via Resend.', err as any);
       return false;
     }
   }

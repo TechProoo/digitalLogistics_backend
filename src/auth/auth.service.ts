@@ -59,6 +59,14 @@ export class AuthService {
       email: customer.email,
     });
 
+    // Fire-and-forget welcome email; never block registration on email delivery.
+    this.emailService
+      .sendWelcomeEmail(customer.email, {
+        name: customer.name,
+        appUrl: process.env.FRONTEND_URL,
+      })
+      .catch(() => undefined);
+
     return { accessToken, customer };
   }
 

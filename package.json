@@ -41,6 +41,7 @@
     "@nestjs/websockets": "^10.4.22",
     "@prisma/client": "^6.19.1",
     "@types/pdfkit": "^0.17.4",
+    "@react-email/components": "^0.5.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
@@ -51,6 +52,7 @@
     "passport-jwt": "^4.0.1",
     "pdfkit": "^0.17.2",
     "reflect-metadata": "^0.2.0",
+    "react": "^19.1.1",
     "resend": "^6.9.1",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3"
@@ -65,6 +67,7 @@
     "@types/jest": "^29.5.2",
     "@types/multer": "^2.0.0",
     "@types/node": "^20.3.1",
+    "@types/react": "^19.1.12",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/passport-jwt": "^4.0.1",
     "@types/socket.io": "^3.0.1",
