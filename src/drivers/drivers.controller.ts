@@ -11,6 +11,7 @@ import {
   SetMetadata,
   UploadedFiles,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DriversService } from './drivers.service';
@@ -25,6 +26,7 @@ import { diskStorage } from 'multer';
 import { mkdirSync } from 'fs';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
+import { AdminJwtGuard } from '../admin-auth/guards/admin-jwt.guard';
 
 const UPLOAD_SUBDIR = 'uploads/drivers';
 const UPLOAD_DIR = join(process.cwd(), 'uploads', 'drivers');
@@ -121,6 +123,7 @@ export class DriversController {
   }
 
   // Admin: Applications inbox
+  @UseGuards(AdminJwtGuard)
   @SetMetadata('response_message', 'Driver applications fetched successfully.')
   @Get('applications/inbox')
   listApplications(
@@ -131,6 +134,7 @@ export class DriversController {
   }
 
   // Admin: Approved driver directory
+  @UseGuards(AdminJwtGuard)
   @SetMetadata('response_message', 'Driver directory fetched successfully.')
   @Get('directory')
   listDirectory(@Query('status') status?: DriverStatus) {
@@ -138,6 +142,7 @@ export class DriversController {
   }
 
   // Admin: Available drivers for dispatch
+  @UseGuards(AdminJwtGuard)
   @SetMetadata('response_message', 'Available drivers fetched successfully.')
   @Get('available')
   listAvailable(@Query('vehicleType') vehicleType?: VehicleType) {
@@ -148,6 +153,7 @@ export class DriversController {
     'response_message',
     'Driver application status updated successfully.',
   )
+  @UseGuards(AdminJwtGuard)
   @Patch(':id/application-status')
   updateApplicationStatus(
     @Param('id') id: string,
@@ -157,6 +163,7 @@ export class DriversController {
   }
 
   @SetMetadata('response_message', 'Driver status updated successfully.')
+  @UseGuards(AdminJwtGuard)
   @Patch(':id/status')
   updateDriverStatus(
     @Param('id') id: string,
@@ -165,24 +172,28 @@ export class DriversController {
     return this.driversService.updateDriverStatus(id, body.status);
   }
 
+  @UseGuards(AdminJwtGuard)
   @Get()
   findAll() {
     return this.driversService.findAll();
   }
 
   @SetMetadata('response_message', 'Driver application fetched successfully.')
+  @UseGuards(AdminJwtGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.driversService.findOneById(id);
   }
 
   @SetMetadata('response_message', 'Driver application updated successfully.')
+  @UseGuards(AdminJwtGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateDriverDto: UpdateDriverDto) {
     return this.driversService.update(id, updateDriverDto);
   }
 
   @SetMetadata('response_message', 'Driver application deleted successfully.')
+  @UseGuards(AdminJwtGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.driversService.remove(id);

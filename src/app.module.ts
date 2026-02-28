@@ -11,6 +11,7 @@ import { RatesModule } from './rates/rates.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { CustomThrottlerGuard } from './throttling/custom-throttler.guard';
 import { DriversModule } from './drivers/drivers.module';
+import { AdminAuthModule } from './admin-auth/admin-auth.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -18,6 +19,12 @@ import { DriversModule } from './drivers/drivers.module';
         name: 'global',
         ttl: 60_000,
         limit: 120,
+      },
+      {
+        /** Tight limit for the admin login endpoint only. */
+        name: 'adminLogin',
+        ttl: 900_000, // 15 minutes
+        limit: 10,
       },
     ]),
     PrismaModule,
@@ -27,6 +34,7 @@ import { DriversModule } from './drivers/drivers.module';
     RatesModule,
     InvoiceModule,
     DriversModule,
+    AdminAuthModule,
   ],
   controllers: [AppController],
   providers: [

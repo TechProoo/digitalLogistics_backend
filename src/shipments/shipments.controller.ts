@@ -18,6 +18,7 @@ import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
 import { AddCheckpointDto } from './dto/add-checkpoint.dto';
 import { AddNoteDto } from './dto/add-note.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminJwtGuard } from '../admin-auth/guards/admin-jwt.guard';
 
 type AssignDriverDto = {
   driverId: string;
@@ -61,6 +62,7 @@ export class ShipmentsController {
   }
 
   @SetMetadata('response_message', 'Shipment updated successfully.')
+  @UseGuards(AdminJwtGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -70,6 +72,7 @@ export class ShipmentsController {
   }
 
   @SetMetadata('response_message', 'Shipment status updated successfully.')
+  @UseGuards(AdminJwtGuard)
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
@@ -79,12 +82,14 @@ export class ShipmentsController {
   }
 
   @SetMetadata('response_message', 'Shipment assigned successfully.')
+  @UseGuards(AdminJwtGuard)
   @Patch(':id/assign')
   assignDriver(@Param('id') id: string, @Body() body: AssignDriverDto) {
     return this.shipmentsService.assignDriver(id, body.driverId);
   }
 
   @SetMetadata('response_message', 'Checkpoint added successfully.')
+  @UseGuards(AdminJwtGuard)
   @Post(':id/checkpoints')
   addCheckpoint(
     @Param('id') id: string,
@@ -94,12 +99,14 @@ export class ShipmentsController {
   }
 
   @SetMetadata('response_message', 'Note added successfully.')
+  @UseGuards(AdminJwtGuard)
   @Post(':id/notes')
   addNote(@Param('id') id: string, @Body() addNoteDto: AddNoteDto) {
     return this.shipmentsService.addNote(id, addNoteDto);
   }
 
   @SetMetadata('response_message', 'Shipment deleted successfully.')
+  @UseGuards(AdminJwtGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.shipmentsService.remove(id);
