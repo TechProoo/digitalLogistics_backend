@@ -80,22 +80,149 @@ const NIGERIA_PARCEL_LANES: Record<string, number> = {
   'jos::kano': 5_500,
   'kano::maiduguri': 9_000,
   'kano::sokoto': 7_500,
+
+  // ── Lagos hub (additional state capitals) ─────────────────────────────
+  'ilorin::lagos': 5_500,
+  'akure::lagos': 5_000,
+  'adoekiti::lagos': 5_500,
+  'lagos::osogbo': 4_800,
+  'lagos::lokoja': 7_500,
+  'asaba::lagos': 8_500,
+  'awka::lagos': 10_500,
+  'lagos::umuahia': 11_000,
+  'abakaliki::lagos': 12_000,
+  'lagos::uyo': 13_500,
+  'lagos::yenagoa': 11_500,
+  'lagos::minna': 7_000,
+  'lagos::lafia': 8_500,
+
+  // ── Abuja hub (additional state capitals) ─────────────────────────────
+  'abuja::ilorin': 5_500,
+  'abuja::lokoja': 3_500,
+  'abuja::minna': 3_000,
+  'abuja::lafia': 3_500,
+  'abuja::bauchi': 6_500,
+  'abuja::gombe': 7_500,
+  'abuja::yola': 10_000,
+  'abuja::jalingo': 9_500,
+  'abuja::akure': 6_500,
+  'abuja::adoekiti': 7_000,
+  'abuja::osogbo': 6_000,
+  'abuja::awka': 8_000,
+  'abuja::asaba': 7_500,
+  'abuja::abakaliki': 9_000,
+  'abuja::umuahia': 9_500,
+  'abuja::uyo': 11_000,
+  'abuja::yenagoa': 10_500,
+  'abuja::benin': 6_500,
+  'abuja::warri': 8_000,
+  'abuja::calabar': 12_000,
+
+  // ── Kano hub (additional northern state capitals) ─────────────────────
+  'dutse::kano': 3_500,
+  'kano::katsina': 4_500,
+  'gusau::kano': 6_000,
+  'bauchi::kano': 5_500,
+  'birninkebbi::kano': 7_000,
+  'damaturu::kano': 7_500,
+  'gombe::kano': 6_500,
+  'kano::yola': 9_500,
+  'jalingo::kano': 10_000,
+
+  // ── PH hub (additional southern state capitals) ───────────────────────
+  'ph::uyo': 5_500,
+  'ph::yenagoa': 5_000,
+  'ph::umuahia': 5_500,
+  'abakaliki::ph': 8_000,
+  'awka::ph': 7_000,
+  'asaba::ph': 6_500,
+
+  // ── South-West / Middle Belt cross routes ─────────────────────────────
+  'ibadan::ilorin': 3_500,
+  'ibadan::osogbo': 2_500,
+  'akure::ibadan': 3_000,
+  'adoekiti::ibadan': 3_500,
+  'akure::osogbo': 2_500,
+  'adoekiti::akure': 2_000,
+  'benin::ilorin': 5_500,
+  'benin::akure': 3_500,
+  'asaba::benin': 3_000,
+  'awka::enugu': 3_000,
+  'abakaliki::enugu': 3_500,
+  'enugu::umuahia': 4_000,
+  'calabar::uyo': 3_000,
+  'umuahia::uyo': 4_500,
+  'owerri::umuahia': 2_500,
+  'awka::owerri': 3_500,
+  'owerri::yenagoa': 5_000,
+
+  // ── North cross routes ────────────────────────────────────────────────
+  'bauchi::jos': 3_500,
+  'gombe::bauchi': 3_000,
+  'maiduguri::damaturu': 3_500,
+  'kaduna::minna': 3_500,
+  'kaduna::jos': 4_000,
+  'katsina::sokoto': 5_500,
+  'birninkebbi::sokoto': 3_500,
+  'gusau::sokoto': 4_000,
+  'gusau::kaduna': 5_500,
+  'yola::jalingo': 2_500,
+  'yola::gombe': 4_500,
+  'lokoja::abuja': 3_500,
+  'lafia::jos': 3_500,
+  'lokoja::benin': 4_500,
+  'minna::ilorin': 5_000,
+
+  // ── Intra-city for new state capitals ─────────────────────────────────
+  'ilorin::ilorin': 2_500,
+  'akure::akure': 2_500,
+  'adoekiti::adoekiti': 2_500,
+  'osogbo::osogbo': 2_500,
+  'awka::awka': 2_500,
+  'umuahia::umuahia': 2_500,
+  'uyo::uyo': 2_500,
+  'yenagoa::yenagoa': 2_800,
+  'asaba::asaba': 2_500,
+  'abakaliki::abakaliki': 2_500,
+  'lokoja::lokoja': 2_500,
+  'lafia::lafia': 2_500,
+  'minna::minna': 2_500,
+  'bauchi::bauchi': 2_500,
+  'gombe::gombe': 2_500,
+  'yola::yola': 2_500,
+  'jalingo::jalingo': 2_500,
+  'dutse::dutse': 2_500,
+  'katsina::katsina': 2_500,
+  'gusau::gusau': 2_500,
+  'birninkebbi::birninkebbi': 2_500,
+  'damaturu::damaturu': 2_500,
+  'makurdi::makurdi': 2_500,
+
+  // ── Makurdi (Benue) routes ────────────────────────────────────────────
+  'abuja::makurdi': 5_000,
+  'lagos::makurdi': 9_000,
+  'enugu::makurdi': 5_500,
+  'jos::makurdi': 5_000,
+  'lafia::makurdi': 3_500,
+  'lokoja::makurdi': 4_500,
 };
 
 /**
- * Resolve a user-supplied city string to a canonical key used in
- * NIGERIA_PARCEL_LANES.  Returns '' if not matched.
+ * Resolve a user-supplied city/state string to a canonical key used in
+ * NIGERIA_PARCEL_LANES.  Recognises all 36 Nigerian states + FCT and
+ * maps state names to their capital city keys.  Returns '' if not matched.
  */
 function resolveNigeriaCity(raw: string): string {
   const v = raw.toLowerCase().trim();
 
+  // ── Direct city matches (highest priority) ────────────────────────────
   if (/\blagos\b/.test(v)) return 'lagos';
   if (/\babuja\b/.test(v)) return 'abuja';
   if (/\bkano\b/.test(v)) return 'kano';
   if (/\bport\s*harcourt\b|\bportharcourt\b|\bph\b/.test(v)) return 'ph';
-  if (/\babeokuta\b|\bogun\b/.test(v)) return 'abeokuta';
+  if (/\babeokuta\b/.test(v)) return 'abeokuta';
   if (/\bibadan\b/.test(v)) return 'ibadan';
-  if (/\bbenin\s*city\b|\bbenin\b/.test(v)) return 'benin';
+  if (/\bbenin\s*city\b/.test(v)) return 'benin';
   if (/\bwarri\b/.test(v)) return 'warri';
   if (/\benugu\b/.test(v)) return 'enugu';
   if (/\bowerri\b/.test(v)) return 'owerri';
@@ -104,6 +231,62 @@ function resolveNigeriaCity(raw: string): string {
   if (/\bjos\b/.test(v)) return 'jos';
   if (/\bmaiduguri\b/.test(v)) return 'maiduguri';
   if (/\bsokoto\b/.test(v)) return 'sokoto';
+  if (/\bilorin\b/.test(v)) return 'ilorin';
+  if (/\bakure\b/.test(v)) return 'akure';
+  if (/\bado[\s-]*ekiti\b/.test(v)) return 'adoekiti';
+  if (/\bosogbo\b|\boshogbo\b/.test(v)) return 'osogbo';
+  if (/\babakaliki\b/.test(v)) return 'abakaliki';
+  if (/\bumuahia\b/.test(v)) return 'umuahia';
+  if (/\buyo\b/.test(v)) return 'uyo';
+  if (/\byenagoa\b/.test(v)) return 'yenagoa';
+  if (/\basaba\b/.test(v)) return 'asaba';
+  if (/\bawka\b/.test(v)) return 'awka';
+  if (/\blafia\b/.test(v)) return 'lafia';
+  if (/\blokoja\b/.test(v)) return 'lokoja';
+  if (/\bminna\b/.test(v)) return 'minna';
+  if (/\bbirnin[\s-]*kebbi\b|\bkebbi\b/.test(v)) return 'birninkebbi';
+  if (/\bgusau\b/.test(v)) return 'gusau';
+  if (/\bkatsina\b/.test(v)) return 'katsina';
+  if (/\bdamaturu\b/.test(v)) return 'damaturu';
+  if (/\bbauchi\b/.test(v)) return 'bauchi';
+  if (/\bgombe\b/.test(v)) return 'gombe';
+  if (/\bjalingo\b/.test(v)) return 'jalingo';
+  if (/\byola\b/.test(v)) return 'yola';
+  if (/\bdutse\b/.test(v)) return 'dutse';
+
+  // ── State-name fallbacks → state capital ──────────────────────────────
+  // (checked after city names so "Benin City" doesn't match "Benue State")
+  if (/\bogun\b/.test(v)) return 'abeokuta';
+  if (/\boyo\b/.test(v)) return 'ibadan';
+  if (/\bedo\b/.test(v)) return 'benin';
+  if (/\bdelta\b/.test(v)) return 'asaba';
+  if (/\brivers\b/.test(v)) return 'ph';
+  if (/\bimo\b/.test(v)) return 'owerri';
+  if (/\bcross\s*river\b/.test(v)) return 'calabar';
+  if (/\bplateau\b/.test(v)) return 'jos';
+  if (/\bborno\b/.test(v)) return 'maiduguri';
+  if (/\bkwara\b/.test(v)) return 'ilorin';
+  if (/\bondo\b/.test(v)) return 'akure';
+  if (/\bekiti\b/.test(v)) return 'adoekiti';
+  if (/\bosun\b/.test(v)) return 'osogbo';
+  if (/\banambra\b/.test(v)) return 'awka';
+  if (/\babia\b/.test(v)) return 'umuahia';
+  if (/\bebonyi\b/.test(v)) return 'abakaliki';
+  if (/\bakwa\s*ibom\b/.test(v)) return 'uyo';
+  if (/\bbayelsa\b/.test(v)) return 'yenagoa';
+  if (/\bnasarawa\b|\bnassarawa\b/.test(v)) return 'lafia';
+  if (/\bkogi\b/.test(v)) return 'lokoja';
+  if (/\bniger\b/.test(v)) return 'minna';
+  if (/\bbenin\b/.test(v)) return 'benin'; // catch-all for "Benin" without "City"
+  if (/\bkebbi\b/.test(v)) return 'birninkebbi';
+  if (/\bzamfara\b/.test(v)) return 'gusau';
+  if (/\byobe\b/.test(v)) return 'damaturu';
+  if (/\btaraba\b/.test(v)) return 'jalingo';
+  if (/\badamawa\b/.test(v)) return 'yola';
+  if (/\bjigawa\b/.test(v)) return 'dutse';
+  if (/\bfct\b|\bfederal\s*capital\b/.test(v)) return 'abuja';
+  if (/\bmakurdi\b/.test(v)) return 'makurdi';
+  if (/\bbenue\b/.test(v)) return 'makurdi';
 
   return '';
 }
@@ -722,7 +905,7 @@ export class ManualRateEngineService {
     if (!v) return false;
     return (
       v.includes('nigeria') ||
-      /\b(lagos|abuja|kano|ogun|abeokuta|port\s*harcourt|portharcourt|\bph\b|apapa|tin\s*can|ibadan|benin\s*city|warri|enugu|owerri|calabar|kaduna|jos|maiduguri|sokoto|zaria|ilorin|ado\s*ekiti|akure)\b/i.test(
+      /\b(lagos|abuja|kano|ogun|abeokuta|port\s*harcourt|portharcourt|\bph\b|apapa|tin\s*can|ibadan|benin\s*city|warri|enugu|owerri|calabar|kaduna|jos|maiduguri|sokoto|zaria|ilorin|ado[\s-]*ekiti|akure|osogbo|oshogbo|abakaliki|umuahia|uyo|yenagoa|asaba|awka|lafia|lokoja|minna|birnin[\s-]*kebbi|gusau|katsina|damaturu|bauchi|gombe|jalingo|yola|dutse|oyo|edo|delta|rivers|imo|cross\s*river|plateau|borno|kwara|ondo|ekiti|osun|anambra|abia|ebonyi|akwa\s*ibom|bayelsa|nasarawa|nassarawa|kogi|niger|kebbi|zamfara|yobe|taraba|adamawa|jigawa|fct|benue|makurdi)\b/i.test(
         v,
       )
     );
@@ -833,23 +1016,46 @@ export class ManualRateEngineService {
     if (!v) return null;
 
     const known: Array<{ key: RegExp; lat: number; lng: number }> = [
+      // ── Original cities ───────────────────────────────────────────────
       { key: /\blagos\b/i, lat: 6.5244, lng: 3.3792 },
-      { key: /\babuja\b/i, lat: 9.0765, lng: 7.4951 },
+      { key: /\babuja\b|\bfct\b|\bfederal\s*capital\b/i, lat: 9.0765, lng: 7.4951 },
       { key: /\bkano\b/i, lat: 12.0022, lng: 8.592 },
-      { key: /\bogun\b|\babeokuta\b/i, lat: 7.1452, lng: 3.3619 },
-      {
-        key: /\bport\s*harcourt\b|\bportharcourt\b|\bph\b/i,
-        lat: 4.8156,
-        lng: 7.0498,
-      },
-      { key: /\bibadan\b/i, lat: 7.3775, lng: 3.947 },
+      { key: /\babeokuta\b|\bogun\b/i, lat: 7.1452, lng: 3.3619 },
+      { key: /\bport\s*harcourt\b|\bportharcourt\b|\bph\b|\brivers\b/i, lat: 4.8156, lng: 7.0498 },
+      { key: /\bibadan\b|\boyo\b/i, lat: 7.3775, lng: 3.947 },
       { key: /\benugu\b/i, lat: 6.4584, lng: 7.5464 },
       { key: /\bwarri\b/i, lat: 5.5167, lng: 5.75 },
-      { key: /\bcalabar\b/i, lat: 4.9517, lng: 8.322 },
+      { key: /\bcalabar\b|\bcross\s*river\b/i, lat: 4.9517, lng: 8.322 },
       { key: /\bkaduna\b/i, lat: 10.5105, lng: 7.4165 },
-      { key: /\bjos\b/i, lat: 9.8965, lng: 8.8583 },
-      { key: /\bowerri\b/i, lat: 5.4836, lng: 7.0333 },
-      { key: /\bbenin\b/i, lat: 6.335, lng: 5.627 },
+      { key: /\bjos\b|\bplateau\b/i, lat: 9.8965, lng: 8.8583 },
+      { key: /\bowerri\b|\bimo\b/i, lat: 5.4836, lng: 7.0333 },
+      { key: /\bbenin\b|\bedo\b/i, lat: 6.335, lng: 5.627 },
+      // ── Additional state capitals ─────────────────────────────────────
+      { key: /\bilorin\b|\bkwara\b/i, lat: 8.4966, lng: 4.5426 },
+      { key: /\bakure\b|\bondo\b/i, lat: 7.2526, lng: 5.2103 },
+      { key: /\bado[\s-]*ekiti\b|\bekiti\b/i, lat: 7.6211, lng: 5.2215 },
+      { key: /\bosogbo\b|\boshogbo\b|\bosun\b/i, lat: 7.7827, lng: 4.5418 },
+      { key: /\bawka\b|\banambra\b/i, lat: 6.2109, lng: 7.0674 },
+      { key: /\bumuahia\b|\babia\b/i, lat: 5.5244, lng: 7.4905 },
+      { key: /\babakaliki\b|\bebonyi\b/i, lat: 6.3249, lng: 8.1137 },
+      { key: /\buyo\b|\bakwa\s*ibom\b/i, lat: 5.0377, lng: 7.9128 },
+      { key: /\byenagoa\b|\bbayelsa\b/i, lat: 4.9247, lng: 6.2642 },
+      { key: /\basaba\b|\bdelta\b/i, lat: 6.1981, lng: 6.7339 },
+      { key: /\blokoja\b|\bkogi\b/i, lat: 7.7969, lng: 6.7409 },
+      { key: /\blafia\b|\bnasarawa\b|\bnassarawa\b/i, lat: 8.4966, lng: 8.5157 },
+      { key: /\bminna\b|\bniger\b/i, lat: 9.6139, lng: 6.5569 },
+      { key: /\bbauchi\b/i, lat: 10.3158, lng: 9.8442 },
+      { key: /\bgombe\b/i, lat: 10.2897, lng: 11.1711 },
+      { key: /\byola\b|\badamawa\b/i, lat: 9.2035, lng: 12.4954 },
+      { key: /\bjalingo\b|\btaraba\b/i, lat: 8.8935, lng: 11.3596 },
+      { key: /\bmaiduguri\b|\bborno\b/i, lat: 11.8311, lng: 13.151 },
+      { key: /\bsokoto\b/i, lat: 13.0607, lng: 5.2476 },
+      { key: /\bkatsina\b/i, lat: 13.0059, lng: 7.6006 },
+      { key: /\bgusau\b|\bzamfara\b/i, lat: 12.1704, lng: 6.6611 },
+      { key: /\bbirnin[\s-]*kebbi\b|\bkebbi\b/i, lat: 12.454, lng: 4.199 },
+      { key: /\bdamaturu\b|\byobe\b/i, lat: 11.747, lng: 11.9608 },
+      { key: /\bdutse\b|\bjigawa\b/i, lat: 11.7562, lng: 9.3389 },
+      { key: /\bmakurdi\b|\bbenue\b/i, lat: 7.7338, lng: 8.5214 },
     ];
 
     const hit = known.find((k) => k.key.test(v));
@@ -892,6 +1098,87 @@ export class ManualRateEngineService {
       'jos::kano': 280,
       'kano::maiduguri': 650,
       'kano::sokoto': 530,
+
+      // Additional state-capital distances (road km, approximate)
+      'lagos::ilorin': 300,
+      'lagos::akure': 310,
+      'lagos::adoekiti': 340,
+      'lagos::osogbo': 250,
+      'lagos::lokoja': 500,
+      'lagos::asaba': 490,
+      'lagos::awka': 530,
+      'lagos::umuahia': 570,
+      'lagos::abakaliki': 620,
+      'lagos::uyo': 680,
+      'lagos::yenagoa': 560,
+      'lagos::minna': 540,
+      'lagos::lafia': 700,
+      'lagos::makurdi': 750,
+
+      'abuja::ilorin': 350,
+      'abuja::lokoja': 200,
+      'abuja::minna': 150,
+      'abuja::lafia': 180,
+      'abuja::bauchi': 350,
+      'abuja::gombe': 500,
+      'abuja::yola': 700,
+      'abuja::jalingo': 650,
+      'abuja::akure': 400,
+      'abuja::adoekiti': 430,
+      'abuja::osogbo': 380,
+      'abuja::awka': 420,
+      'abuja::asaba': 400,
+      'abuja::abakaliki': 480,
+      'abuja::umuahia': 500,
+      'abuja::uyo': 620,
+      'abuja::yenagoa': 560,
+      'abuja::benin': 380,
+      'abuja::warri': 450,
+      'abuja::calabar': 700,
+      'abuja::makurdi': 300,
+
+      'kano::dutse': 90,
+      'kano::katsina': 190,
+      'kano::gusau': 300,
+      'kano::bauchi': 240,
+      'kano::birninkebbi': 400,
+      'kano::damaturu': 350,
+      'kano::gombe': 380,
+      'kano::yola': 600,
+      'kano::jalingo': 620,
+
+      'ph::uyo': 180,
+      'ph::yenagoa': 130,
+      'ph::umuahia': 170,
+      'ph::abakaliki': 290,
+      'ph::awka': 230,
+      'ph::asaba': 200,
+
+      'ibadan::ilorin': 180,
+      'ibadan::osogbo': 90,
+      'ibadan::akure': 180,
+      'ibadan::adoekiti': 200,
+      'benin::akure': 190,
+      'benin::asaba': 100,
+      'enugu::awka': 90,
+      'enugu::abakaliki': 110,
+      'enugu::umuahia': 150,
+      'enugu::makurdi': 280,
+      'calabar::uyo': 80,
+      'umuahia::uyo': 170,
+      'owerri::umuahia': 75,
+      'bauchi::jos': 130,
+      'gombe::bauchi': 150,
+      'kaduna::minna': 170,
+      'kaduna::jos': 200,
+      'yola::jalingo': 100,
+      'yola::gombe': 250,
+      'lokoja::benin': 260,
+      'minna::ilorin': 290,
+      'lafia::jos': 130,
+      'lafia::makurdi': 150,
+      'lokoja::makurdi': 220,
+      'jos::makurdi': 250,
     };
 
     return known[key] ?? known[rev] ?? null;

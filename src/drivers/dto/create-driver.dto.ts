@@ -1,5 +1,5 @@
 import { VehicleType } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateDriverDto {
   @IsEnum(VehicleType)
@@ -12,6 +12,13 @@ export class CreateDriverDto {
   @IsString()
   @IsNotEmpty()
   driverName: string;
+
+  @IsEmail()
+  driverEmail: string;
+
+  @IsString()
+  @IsNotEmpty()
+  driverPhone: string;
 
   @IsString()
   @IsNotEmpty()
@@ -32,4 +39,46 @@ export class CreateDriverDto {
   @IsString()
   @IsNotEmpty()
   guarantorNin: string;
+
+  // ── R2 object keys (uploaded directly by the frontend) ──
+
+  @IsString()
+  @IsNotEmpty()
+  proofOfOwnershipPath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  vehicleLicensePath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  hackneyPermitPath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  vehicleInsurancePath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  vehicleVideoPath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  driversLicensePath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  meansOfIdPath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  driverFacePhotoPath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  driverFullBodyPhotoPath: string;
+
+  @IsString()
+  @IsNotEmpty()
+  guarantorMeansOfIdPath: string;
 }

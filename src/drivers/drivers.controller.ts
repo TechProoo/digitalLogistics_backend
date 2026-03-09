@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,11 +8,8 @@ import {
   Post,
   Query,
   SetMetadata,
-  UploadedFiles,
-  UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
@@ -22,104 +18,21 @@ import {
   DriverStatus,
   VehicleType,
 } from '@prisma/client';
-import { diskStorage } from 'multer';
-import { mkdirSync } from 'fs';
-import { extname, join } from 'path';
-import { randomUUID } from 'crypto';
 import { AdminJwtGuard } from '../admin-auth/guards/admin-jwt.guard';
-
-const UPLOAD_SUBDIR = 'uploads/drivers';
-const UPLOAD_DIR = join(process.cwd(), 'uploads', 'drivers');
-mkdirSync(UPLOAD_DIR, { recursive: true });
-
-function toStoredPath(file: Express.Multer.File): string {
-  // Store with forward slashes for portability.
-  return `${UPLOAD_SUBDIR}/${file.filename}`;
-}
 
 @Controller('drivers')
 export class DriversController {
   constructor(private readonly driversService: DriversService) {}
 
+  /**
+   * POST /drivers/applications
+   * Frontend uploads files directly to R2, then sends a JSON body
+   * containing text fields + R2 object keys for each file.
+   */
   @SetMetadata('response_message', 'Driver application submitted successfully.')
   @Post('applications')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'proofOfOwnership', maxCount: 1 },
-        { name: 'vehicleLicense', maxCount: 1 },
-        { name: 'hackneyPermit', maxCount: 1 },
-        { name: 'vehicleInsurance', maxCount: 1 },
-        { name: 'vehicleVideo', maxCount: 1 },
-        { name: 'driversLicense', maxCount: 1 },
-        { name: 'meansOfId', maxCount: 1 },
-        { name: 'driverFacePhoto', maxCount: 1 },
-        { name: 'driverFullBodyPhoto', maxCount: 1 },
-        { name: 'guarantorMeansOfId', maxCount: 1 },
-      ],
-      {
-        storage: diskStorage({
-          destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-          filename: (_req, file, cb) => {
-            const id = randomUUID();
-            const ext = extname(file.originalname || '').toLowerCase();
-            cb(null, `${id}${ext || ''}`);
-          },
-        }),
-        limits: {
-          // 100 MB per file to accommodate 1-minute vehicle videos.
-          fileSize: 100 * 1024 * 1024,
-        },
-      },
-    ),
-  )
-  createApplication(
-    @Body() createDriverDto: CreateDriverDto,
-    @UploadedFiles()
-    files: {
-      proofOfOwnership?: Express.Multer.File[];
-      vehicleLicense?: Express.Multer.File[];
-      hackneyPermit?: Express.Multer.File[];
-      vehicleInsurance?: Express.Multer.File[];
-      vehicleVideo?: Express.Multer.File[];
-      driversLicense?: Express.Multer.File[];
-      meansOfId?: Express.Multer.File[];
-      driverFacePhoto?: Express.Multer.File[];
-      driverFullBodyPhoto?: Express.Multer.File[];
-      guarantorMeansOfId?: Express.Multer.File[];
-    },
-  ) {
-    const required = [
-      'proofOfOwnership',
-      'vehicleLicense',
-      'hackneyPermit',
-      'vehicleInsurance',
-      'vehicleVideo',
-      'driversLicense',
-      'meansOfId',
-      'driverFacePhoto',
-      'driverFullBodyPhoto',
-      'guarantorMeansOfId',
-    ] as const;
-
-    for (const k of required) {
-      if (!files?.[k]?.[0]) {
-        throw new BadRequestException(`Missing required upload: ${k}`);
-      }
-    }
-
-    return this.driversService.createApplication(createDriverDto, {
-      proofOfOwnershipPath: toStoredPath(files.proofOfOwnership![0]),
-      vehicleLicensePath: toStoredPath(files.vehicleLicense![0]),
-      hackneyPermitPath: toStoredPath(files.hackneyPermit![0]),
-      vehicleInsurancePath: toStoredPath(files.vehicleInsurance![0]),
-      vehicleVideoPath: toStoredPath(files.vehicleVideo![0]),
-      driversLicensePath: toStoredPath(files.driversLicense![0]),
-      meansOfIdPath: toStoredPath(files.meansOfId![0]),
-      driverFacePhotoPath: toStoredPath(files.driverFacePhoto![0]),
-      driverFullBodyPhotoPath: toStoredPath(files.driverFullBodyPhoto![0]),
-      guarantorMeansOfIdPath: toStoredPath(files.guarantorMeansOfId![0]),
-    });
+  createApplication(@Body() createDriverDto: CreateDriverDto) {
+    return this.driversService.createApplication(createDriverDto);
   }
 
   // Admin: Applications inbox

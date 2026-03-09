@@ -2,6 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Resend } from 'resend';
 import * as React from 'react';
 import { WelcomeEmail, welcomeEmailText } from './templates/welcome-email';
+import {
+  ApplicationUnderReviewEmail,
+  applicationUnderReviewEmailText,
+} from './templates/application-under-review-email';
 
 @Injectable()
 export class EmailService {
@@ -127,6 +131,54 @@ export class EmailService {
       return true;
     } catch (err) {
       this.logger.error('Failed to send welcome email via Resend.', err as any);
+      return false;
+    }
+  }
+
+  async sendApplicationUnderReviewEmail(
+    to: string,
+    args: { name?: string | null; vehicleType: string; plateNumber: string },
+  ): Promise<boolean> {
+    if (!this.resend) {
+      this.logger.warn('RESEND_API_KEY not set; skipping email send.');
+      return false;
+    }
+
+    const supportEmail = 'support@digitaldelivery.org';
+    const logoUrl = this.getLogoUrl();
+
+    const subject = 'We received your driver application — Digital Delivery';
+    const text = applicationUnderReviewEmailText({
+      name: args.name,
+      vehicleType: args.vehicleType,
+      plateNumber: args.plateNumber,
+      supportEmail,
+      logoUrl,
+    });
+
+    const react = React.createElement(ApplicationUnderReviewEmail, {
+      name: args.name,
+      vehicleType: args.vehicleType,
+      plateNumber: args.plateNumber,
+      supportEmail,
+      logoUrl,
+    });
+
+    try {
+      await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        react,
+        text,
+        ...(this.replyTo ? { reply_to: this.replyTo } : {}),
+      });
+      return true;
+    } catch (err) {
+      this.logger.error(
+        'Failed to send application-under-review email via Resend.',
+        err as any,
+      );
       return false;
     }
   }

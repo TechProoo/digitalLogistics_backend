@@ -12,6 +12,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { CustomThrottlerGuard } from './throttling/custom-throttler.guard';
 import { DriversModule } from './drivers/drivers.module';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
+import { R2Module } from './r2/r2.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -35,6 +36,7 @@ import { AdminAuthModule } from './admin-auth/admin-auth.module';
     InvoiceModule,
     DriversModule,
     AdminAuthModule,
+    R2Module,
   ],
   controllers: [AppController],
   providers: [

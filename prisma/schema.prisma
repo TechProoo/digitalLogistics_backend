@@ -159,6 +159,8 @@ model Driver {
   meansOfIdPath      String
 
   driverName          String
+  driverEmail         String
+  driverPhone         String
   driverAddress       String
   driverFacePhotoPath String
   driverFullBodyPhotoPath String

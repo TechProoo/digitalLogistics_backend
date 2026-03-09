@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Driver" ADD COLUMN "driverEmail" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Driver" ADD COLUMN "driverPhone" TEXT NOT NULL DEFAULT '';

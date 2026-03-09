@@ -1,41 +1,80 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DriverApplicationStatus, DriverStatus, Prisma, VehicleType } from '@prisma/client';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  DriverApplicationStatus,
+  DriverStatus,
+  Prisma,
+  VehicleType,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class DriversService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(DriversService.name);
 
-  async createApplication(
-    createDriverDto: CreateDriverDto,
-    paths: {
-      proofOfOwnershipPath: string;
-      vehicleLicensePath: string;
-      hackneyPermitPath: string;
-      vehicleInsurancePath: string;
-      vehicleVideoPath: string;
-      driversLicensePath: string;
-      meansOfIdPath: string;
-      driverFacePhotoPath: string;
-      driverFullBodyPhotoPath: string;
-      guarantorMeansOfIdPath: string;
-    },
-  ) {
-    return this.prisma.driver.create({
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
+
+  async createApplication(createDriverDto: CreateDriverDto) {
+    const driver = await this.prisma.driver.create({
       data: {
         vehicleType: createDriverDto.vehicleType,
         plateNumber: createDriverDto.plateNumber,
         driverName: createDriverDto.driverName,
+        driverEmail: createDriverDto.driverEmail,
+        driverPhone: createDriverDto.driverPhone,
         driverAddress: createDriverDto.driverAddress,
         guarantorName: createDriverDto.guarantorName,
         guarantorAddress: createDriverDto.guarantorAddress,
         guarantorPhone: createDriverDto.guarantorPhone,
         guarantorNin: createDriverDto.guarantorNin,
-        ...paths,
+        // R2 object keys
+        proofOfOwnershipPath: createDriverDto.proofOfOwnershipPath,
+        vehicleLicensePath: createDriverDto.vehicleLicensePath,
+        hackneyPermitPath: createDriverDto.hackneyPermitPath,
+        vehicleInsurancePath: createDriverDto.vehicleInsurancePath,
+        vehicleVideoPath: createDriverDto.vehicleVideoPath,
+        driversLicensePath: createDriverDto.driversLicensePath,
+        meansOfIdPath: createDriverDto.meansOfIdPath,
+        driverFacePhotoPath: createDriverDto.driverFacePhotoPath,
+        driverFullBodyPhotoPath: createDriverDto.driverFullBodyPhotoPath,
+        guarantorMeansOfIdPath: createDriverDto.guarantorMeansOfIdPath,
       },
     });
+
+    // Fire-and-forget: send "application under review" notifications
+    this.sendApplicationReceivedNotifications(driver).catch((err) =>
+      this.logger.error('Failed to send application notifications', err),
+    );
+
+    return driver;
+  }
+
+  private async sendApplicationReceivedNotifications(driver: {
+    driverName: string;
+    driverEmail: string;
+    vehicleType: string;
+    plateNumber: string;
+  }) {
+    const firstName = driver.driverName.split(' ')[0] || driver.driverName;
+
+    await this.emailService.sendApplicationUnderReviewEmail(
+      driver.driverEmail,
+      {
+        name: firstName,
+        vehicleType: driver.vehicleType,
+        plateNumber: driver.plateNumber,
+      },
+    );
   }
 
   findAll() {
