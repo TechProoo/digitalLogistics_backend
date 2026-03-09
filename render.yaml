@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: digitaldelivery-backend
+    name: digitalLogistics_backend
     runtime: node
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
