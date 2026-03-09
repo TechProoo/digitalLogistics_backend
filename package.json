@@ -10,7 +10,7 @@
     "prebuild": "prisma generate",
     "build": "./node_modules/.bin/tsc -p tsconfig.build.json && node -e \"require('fs').statSync('dist/main.js')\" && echo 'dist/main.js OK'",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "node --max-old-space-size=512 dist/main.js",
+    "start": "node --max-old-space-size=384 dist/main.js",
     "start:nest": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
