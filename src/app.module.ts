@@ -13,6 +13,9 @@ import { CustomThrottlerGuard } from './throttling/custom-throttler.guard';
 import { DriversModule } from './drivers/drivers.module';
 import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { R2Module } from './r2/r2.module';
+import { MessagingModule } from './messaging/messaging.module';
+import { DriverAuthModule } from './driver-auth/driver-auth.module';
+import { DeliveryModule } from './delivery/delivery.module';
 @Module({
   imports: [
     ThrottlerModule.forRoot([
@@ -37,6 +40,9 @@ import { R2Module } from './r2/r2.module';
     DriversModule,
     AdminAuthModule,
     R2Module,
+    MessagingModule,
+    DriverAuthModule,
+    DeliveryModule,
   ],
   controllers: [AppController],
   providers: [

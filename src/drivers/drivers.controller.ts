@@ -13,6 +13,7 @@ import {
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
+import { UpdateBankDetailsDto } from './dto/update-bank-details.dto';
 import {
   DriverApplicationStatus,
   DriverStatus,
@@ -33,6 +34,29 @@ export class DriversController {
   @Post('applications')
   createApplication(@Body() createDriverDto: CreateDriverDto) {
     return this.driversService.createApplication(createDriverDto);
+  }
+
+  /**
+   * PATCH /drivers/:id/bank-details
+   * Driver updates their own bank details for payouts.
+   */
+  @SetMetadata('response_message', 'Bank details updated successfully.')
+  @Patch(':id/bank-details')
+  updateBankDetails(
+    @Param('id') id: string,
+    @Body() dto: UpdateBankDetailsDto,
+  ) {
+    return this.driversService.updateBankDetails(id, dto);
+  }
+
+  /**
+   * GET /drivers/:id/bank-details
+   * Driver retrieves their bank details.
+   */
+  @SetMetadata('response_message', 'Bank details fetched successfully.')
+  @Get(':id/bank-details')
+  getBankDetails(@Param('id') id: string) {
+    return this.driversService.getBankDetails(id);
   }
 
   // Admin: Applications inbox

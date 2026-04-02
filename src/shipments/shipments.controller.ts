@@ -88,6 +88,16 @@ export class ShipmentsController {
     return this.shipmentsService.assignDriver(id, body.driverId);
   }
 
+  @SetMetadata('response_message', 'Last-mile driver assigned successfully.')
+  @UseGuards(AdminJwtGuard)
+  @Patch(':id/assign-lastmile')
+  assignLastMileDriver(
+    @Param('id') id: string,
+    @Body() body: { driverId: string },
+  ) {
+    return this.shipmentsService.assignLastMileDriver(id, body.driverId);
+  }
+
   @SetMetadata('response_message', 'Checkpoint added successfully.')
   @UseGuards(AdminJwtGuard)
   @Post(':id/checkpoints')

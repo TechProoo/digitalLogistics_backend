@@ -14,6 +14,10 @@ enum ShipmentStatus {
   ACCEPTED
   PICKED_UP
   IN_TRANSIT
+  HANDED_OFF
+  IN_AIR
+  AT_SEA
+  ARRIVED_HUB
   DELIVERED
   CANCELLED
 }
@@ -73,6 +77,9 @@ model Shipment {
 
   driverId String?
   driver   Driver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+
+  transferLocation  String?
+  lastMileDriverId  String?
 
   pickupLocation      String
   destinationLocation String
@@ -171,7 +178,14 @@ model Driver {
   guarantorNin         String
   guarantorMeansOfIdPath String
 
+  passwordHash String?
+
+  bankName        String?
+  bankAccount     String?
+  bankAccountName String?
+
   shipments Shipment[]
+  messages  DriverMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -180,4 +194,17 @@ model Driver {
   @@index([applicationStatus])
   @@index([status])
   @@index([createdAt])
+}
+
+model DriverMessage {
+  id         String   @id @default(uuid())
+  driverId   String
+  driver     Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  sender     String   // "admin" or "driver"
+  text       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([driverId])
+  @@index([driverId, createdAt])
 }

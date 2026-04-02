@@ -10,9 +10,12 @@ import {
   Prisma,
   VehicleType,
 } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
+import { UpdateBankDetailsDto } from './dto/update-bank-details.dto';
 import { EmailService } from '../email/email.service';
 
 @Injectable()
@@ -130,15 +133,35 @@ export class DriversService {
   }
 
   async updateApplicationStatus(id: string, status: DriverApplicationStatus) {
-    await this.findOneById(id);
+    const driver = await this.findOneById(id);
 
     const next: Prisma.DriverUpdateInput = {
       applicationStatus: status,
     };
 
-    // On approval, default driver status to AVAILABLE if not suspended.
+    // On approval: set AVAILABLE, generate temp password, email credentials
     if (status === 'APPROVED') {
       next.status = 'AVAILABLE';
+
+      // Generate a random 8-char temporary password
+      const tempPassword = crypto.randomBytes(4).toString('hex'); // e.g. "a1b2c3d4"
+      const hash = await bcrypt.hash(tempPassword, 10);
+      next.passwordHash = hash;
+
+      this.logger.log(
+        `Driver ${id} approved. Temp password generated for ${driver.driverEmail}`,
+      );
+
+      // Send approval email with login credentials
+      const driverPlatformUrl =
+        process.env.DRIVER_PLATFORM_URL || 'http://localhost:5175';
+
+      await this.emailService.sendDriverApprovalEmail(driver.driverEmail, {
+        name: driver.driverName,
+        email: driver.driverEmail,
+        tempPassword,
+        loginUrl: `${driverPlatformUrl}/login`,
+      });
     }
 
     // On rejection, make driver OFFLINE.
@@ -172,5 +195,43 @@ export class DriversService {
 
   remove(id: string) {
     throw new NotFoundException(`Driver application ${id} not found`);
+  }
+
+  async updateBankDetails(id: string, dto: UpdateBankDetailsDto) {
+    const driver = await this.prisma.driver.findUnique({ where: { id } });
+    if (!driver) {
+      throw new NotFoundException(`Driver ${id} not found`);
+    }
+
+    return this.prisma.driver.update({
+      where: { id },
+      data: {
+        bankName: dto.bankName,
+        bankAccount: dto.bankAccount,
+        bankAccountName: dto.bankAccountName,
+      },
+      select: {
+        id: true,
+        bankName: true,
+        bankAccount: true,
+        bankAccountName: true,
+      },
+    });
+  }
+
+  async getBankDetails(id: string) {
+    const driver = await this.prisma.driver.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        bankName: true,
+        bankAccount: true,
+        bankAccountName: true,
+      },
+    });
+    if (!driver) {
+      throw new NotFoundException(`Driver ${id} not found`);
+    }
+    return driver;
   }
 }

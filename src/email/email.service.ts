@@ -135,6 +135,97 @@ export class EmailService {
     }
   }
 
+  async sendDriverApprovalEmail(
+    to: string,
+    args: {
+      name: string;
+      email: string;
+      tempPassword: string;
+      loginUrl: string;
+    },
+  ): Promise<boolean> {
+    if (!this.resend) {
+      this.logger.warn('RESEND_API_KEY not set; skipping email send.');
+      this.logger.log(
+        `[DEV] Driver approval email for ${args.email}: password=${args.tempPassword}, login=${args.loginUrl}`,
+      );
+      return false;
+    }
+
+    const logoUrl = this.getLogoUrl();
+    const subject =
+      'Your driver application has been approved — Digital Delivery';
+
+    const text = [
+      `Hi ${args.name},`,
+      '',
+      'Great news! Your driver application with Digital Delivery has been approved.',
+      '',
+      'You can now log in to the Driver Platform using the credentials below:',
+      '',
+      `Email: ${args.email}`,
+      `Temporary Password: ${args.tempPassword}`,
+      `Login URL: ${args.loginUrl}`,
+      '',
+      'Please change your password after your first login.',
+      '',
+      'If you have any questions, contact support@digitaldelivery.org.',
+      '',
+      '— The Digital Delivery Team',
+    ].join('\n');
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 520px; margin: 0 auto;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <img src="${logoUrl}" alt="Digital Delivery" style="height:34px;width:auto;" />
+        </div>
+        <h2 style="color:#1E40AF;">Application Approved!</h2>
+        <p>Hi <strong>${args.name}</strong>,</p>
+        <p>Great news! Your driver application with Digital Delivery has been <span style="color:#22c55e;font-weight:700;">approved</span>.</p>
+        <p>You can now log in to the <strong>Driver Platform</strong> using the credentials below:</p>
+        <div style="background:#f0f4ff;border:1px solid #dbeafe;border-radius:12px;padding:18px 20px;margin:16px 0;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="padding:6px 0;color:#64748b;font-size:13px;">Email</td>
+              <td style="padding:6px 0;font-weight:600;font-size:14px;text-align:right;">${args.email}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;color:#64748b;font-size:13px;">Temporary Password</td>
+              <td style="padding:6px 0;font-weight:700;font-size:16px;font-family:monospace;letter-spacing:2px;text-align:right;color:#1E40AF;">${args.tempPassword}</td>
+            </tr>
+          </table>
+        </div>
+        <p style="text-align:center;margin:20px 0;">
+          <a href="${args.loginUrl}"
+             style="display:inline-block;background:#1E40AF;color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">
+            Log in to Driver Platform
+          </a>
+        </p>
+        <p style="color:#ef4444;font-size:13px;font-weight:500;">Please change your password after your first login.</p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
+        <p style="color:#94a3b8;font-size:12px;">If you have any questions, contact <a href="mailto:support@digitaldelivery.org" style="color:#3b82f6;">support@digitaldelivery.org</a>.</p>
+      </div>
+    `;
+
+    try {
+      await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject,
+        html,
+        text,
+        ...(this.replyTo ? { reply_to: this.replyTo } : {}),
+      });
+      return true;
+    } catch (err) {
+      this.logger.error(
+        'Failed to send driver approval email via Resend.',
+        err as any,
+      );
+      return false;
+    }
+  }
+
   async sendApplicationUnderReviewEmail(
     to: string,
     args: { name?: string | null; vehicleType: string; plateNumber: string },

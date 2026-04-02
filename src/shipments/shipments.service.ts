@@ -362,6 +362,49 @@ export class ShipmentsService {
     return { message: 'Shipment deleted successfully' };
   }
 
+  async assignLastMileDriver(shipmentId: string, driverId: string) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: { id: shipmentId },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment ${shipmentId} not found`);
+    }
+
+    if (shipment.status !== 'ARRIVED_HUB') {
+      throw new BadRequestException(
+        'Last-mile driver can only be assigned when shipment has arrived at hub',
+      );
+    }
+
+    const driver = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+
+    if (!driver) {
+      throw new NotFoundException(`Driver ${driverId} not found`);
+    }
+
+    if (driver.applicationStatus !== 'APPROVED') {
+      throw new BadRequestException('Driver is not approved');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.shipment.update({
+        where: { id: shipmentId },
+        data: { lastMileDriverId: driverId },
+        include: { customer: true, statusHistory: true },
+      });
+
+      await tx.driver.update({
+        where: { id: driverId },
+        data: { status: 'BUSY' },
+      });
+
+      return updated;
+    });
+  }
+
   private generateTrackingId(): string {
     const prefix = 'DD';
     const year = new Date().getFullYear();
