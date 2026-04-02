@@ -22,6 +22,7 @@ const defaultOrigins = [
   'https://www.digitaldelivery.org',
   'https://digital-delivery.netlify.app',
   'https://digital-logistics-admin.netlify.app',
+  'https://digitaldelivery-drivers.netlify.app',
   'http://localhost:5175',
 ];
 
