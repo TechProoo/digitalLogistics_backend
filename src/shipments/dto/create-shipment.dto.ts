@@ -100,7 +100,7 @@ export class CreateShipmentDto {
   @IsOptional()
   receiverPhone?: string;
 
-  /** Declared item value in Nigerian Naira (whole number). */
+  /** Declared item value (whole number). */
   @IsInt()
   @Min(0)
   @IsOptional()
@@ -110,4 +110,9 @@ export class CreateShipmentDto {
   @Min(0)
   @IsOptional()
   amount?: number;
+
+  /** ISO 4217 currency code. Defaults to NGN if not provided. */
+  @IsString()
+  @IsOptional()
+  currency?: string;
 }

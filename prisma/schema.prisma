@@ -90,11 +90,14 @@ model Shipment {
   phone       String
   receiverPhone String?
 
-  // Declared item value in Nigerian Naira (whole number)
+  // Declared item value (whole number)
   declaredValueNgn Int?
 
-  // Amount in Nigerian Naira (whole number)
+  // Amount (whole number)
   amount      Int            @default(0)
+
+  // Currency code (ISO 4217), defaults to NGN
+  currency    String         @default("NGN")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

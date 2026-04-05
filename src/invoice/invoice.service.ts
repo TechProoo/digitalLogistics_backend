@@ -72,13 +72,19 @@ export class InvoiceService {
 
     const signatureImage = this.tryLoadSignature();
 
+    const currencyCode = (shipment as any).currency || 'NGN';
+
     const formatNgn = (amount: number) => {
       const value = Number.isFinite(amount) ? amount : 0;
-      return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN',
-        maximumFractionDigits: 0,
-      }).format(value);
+      try {
+        return new Intl.NumberFormat('en', {
+          style: 'currency',
+          currency: currencyCode,
+          maximumFractionDigits: 0,
+        }).format(value);
+      } catch {
+        return `${currencyCode} ${value.toFixed(0)}`;
+      }
     };
 
     return await new Promise<Buffer>((resolve, reject) => {
@@ -297,7 +303,7 @@ export class InvoiceService {
         .font('Helvetica')
         .fontSize(9)
         .fillColor(colors.muted)
-        .text('Payable upon receipt', left + billW + cardGap + pad, y + 70, {
+        .text(`Currency: ${currencyCode} · Payable upon receipt`, left + billW + cardGap + pad, y + 70, {
           width: dueW - pad * 2,
         });
 
@@ -309,6 +315,8 @@ export class InvoiceService {
         { label: 'Shipment Date', value: shipmentDate },
         { label: 'Service Type', value: String(shipment.serviceType || '-') },
         { label: 'Current Status', value: String(shipment.status || '-') },
+        { label: 'Amount', value: formatNgn(Number(shipment.amount ?? 0)) },
+        { label: 'Currency', value: currencyCode },
         { label: 'Pickup Location', value: shipment.pickupLocation },
         { label: 'Destination Location', value: shipment.destinationLocation },
         { label: 'Package Type', value: shipment.packageType },

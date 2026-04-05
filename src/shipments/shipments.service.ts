@@ -74,6 +74,7 @@ export class ShipmentsService {
       receiverPhone: createShipmentDto.receiverPhone,
       declaredValueNgn: createShipmentDto.declaredValueNgn,
       amount: createShipmentDto.amount,
+      currency: createShipmentDto.currency ?? 'NGN',
       status: 'PENDING',
     };
 
