@@ -303,9 +303,14 @@ export class InvoiceService {
         .font('Helvetica')
         .fontSize(9)
         .fillColor(colors.muted)
-        .text(`Currency: ${currencyCode} · Payable upon receipt`, left + billW + cardGap + pad, y + 70, {
-          width: dueW - pad * 2,
-        });
+        .text(
+          `Currency: ${currencyCode} · Payable upon receipt`,
+          left + billW + cardGap + pad,
+          y + 70,
+          {
+            width: dueW - pad * 2,
+          },
+        );
 
       y = y + cardH + 16;
 
