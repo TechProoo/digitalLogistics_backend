@@ -12,7 +12,7 @@ import { R2Service } from './r2.service';
 import { PresignUploadDto } from './dto/presign-upload.dto';
 import { AdminJwtGuard } from '../admin-auth/guards/admin-jwt.guard';
 
-@SkipThrottle()
+@SkipThrottle({ global: true, adminLogin: true })
 @Controller('uploads')
 export class R2Controller {
   constructor(private readonly r2Service: R2Service) {}

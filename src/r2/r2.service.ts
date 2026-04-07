@@ -13,9 +13,12 @@ export class R2Service {
   private readonly client: S3Client;
   private readonly bucket: string;
   private readonly publicUrl: string;
+  private readonly endpoint: string;
+  private readonly isConfigured: boolean;
 
   constructor() {
     const raw = (process.env.R2_ACCOUNT_ID ?? '').trim();
+    const explicitEndpoint = (process.env.R2_ENDPOINT ?? '').trim();
     this.bucket = (process.env.R2_BUCKET ?? '').trim();
     this.publicUrl = (process.env.R2_PUBLIC_URL ?? '').trim();
 
@@ -24,24 +27,32 @@ export class R2Service {
     //   • full endpoint URL             → https://3255c5a...r2.cloudflarestorage.com
     //   • endpoint with trailing slash  → https://3255c5a...r2.cloudflarestorage.com/
     // Normalise to a clean https:// endpoint.
-    let endpoint: string | undefined;
-    if (raw) {
-      if (raw.startsWith('http')) {
-        // Already a full URL — use as-is (strip trailing slashes)
-        endpoint = raw.replace(/\/+$/, '');
-      } else {
-        // Bare account ID — build the endpoint
-        endpoint = `https://${raw}.r2.cloudflarestorage.com`;
-      }
+    let endpoint = '';
+    if (explicitEndpoint) {
+      endpoint = explicitEndpoint.startsWith('http')
+        ? explicitEndpoint.replace(/\/+$/, '')
+        : `https://${explicitEndpoint}.r2.cloudflarestorage.com`;
+    } else if (raw) {
+      endpoint = raw.startsWith('http')
+        ? raw.replace(/\/+$/, '')
+        : `https://${raw}.r2.cloudflarestorage.com`;
     }
 
+    this.endpoint = endpoint;
+
+    const hasCreds = Boolean(
+      (process.env.R2_ACCESS_KEY_ID ?? '').trim() &&
+      (process.env.R2_SECRET_ACCESS_KEY ?? '').trim(),
+    );
+    this.isConfigured = Boolean(this.endpoint && this.bucket && hasCreds);
+
     this.logger.log(
-      `R2 endpoint: ${endpoint ?? '(not configured)'}, bucket: ${this.bucket || '(not set)'}`,
+      `R2 endpoint: ${this.endpoint || '(not configured)'}, bucket: ${this.bucket || '(not set)'}`,
     );
 
     this.client = new S3Client({
       region: 'auto',
-      endpoint,
+      endpoint: this.endpoint || undefined,
       forcePathStyle: true,
       credentials: {
         accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
@@ -59,6 +70,12 @@ export class R2Service {
     filename: string,
     contentType: string,
   ): Promise<{ key: string; uploadUrl: string }> {
+    if (!this.isConfigured) {
+      throw new Error(
+        'R2 is not configured. Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_BUCKET, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.',
+      );
+    }
+
     // Build a unique key: drivers/<uuid>-<sanitised-filename>
     const sanitised = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
     const key = `${folder}/${randomUUID()}-${sanitised}`;
@@ -73,6 +90,12 @@ export class R2Service {
       expiresIn: 600, // 10 minutes
     });
 
+    if (uploadUrl.includes('s3.auto.amazonaws.com')) {
+      throw new Error(
+        'Invalid R2 upload URL generated. Ensure R2 endpoint is set to https://<account-id>.r2.cloudflarestorage.com (or set R2_ENDPOINT).',
+      );
+    }
+
     return { key, uploadUrl };
   }
 
@@ -81,6 +104,12 @@ export class R2Service {
    * Falls back to the public URL if R2_PUBLIC_URL is configured.
    */
   async presignDownload(key: string, expiresIn = 3600): Promise<string> {
+    if (!this.isConfigured && !this.publicUrl) {
+      throw new Error(
+        'R2 is not configured. Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_BUCKET, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.',
+      );
+    }
+
     // If a public custom domain is set, just return that.
     if (this.publicUrl) {
       return `${this.publicUrl.replace(/\/+$/, '')}/${key}`;
