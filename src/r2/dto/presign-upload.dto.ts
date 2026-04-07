@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
 export class PresignUploadDto {
   /** Original filename (used to generate the storage key). */
@@ -15,4 +17,10 @@ export class PresignUploadDto {
   @IsString()
   @IsNotEmpty()
   folder: string;
+
+  /** File size in bytes (used for upload-size validation). */
+  @IsInt()
+  @Min(1)
+  @Max(MAX_UPLOAD_BYTES)
+  fileSize: number;
 }

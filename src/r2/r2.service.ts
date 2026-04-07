@@ -10,6 +10,7 @@ import { randomUUID } from 'crypto';
 @Injectable()
 export class R2Service {
   private readonly logger = new Logger(R2Service.name);
+  private static readonly MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
   private readonly client: S3Client;
   private readonly bucket: string;
   private readonly publicUrl: string;
@@ -69,11 +70,20 @@ export class R2Service {
     folder: string,
     filename: string,
     contentType: string,
+    fileSize: number,
   ): Promise<{ key: string; uploadUrl: string }> {
     if (!this.isConfigured) {
       throw new Error(
         'R2 is not configured. Set R2_ENDPOINT (or R2_ACCOUNT_ID), R2_BUCKET, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY.',
       );
+    }
+
+    if (!Number.isFinite(fileSize) || fileSize < 1) {
+      throw new Error('Invalid file size.');
+    }
+
+    if (fileSize > R2Service.MAX_UPLOAD_BYTES) {
+      throw new Error('File too large. Maximum allowed size is 50 MB.');
     }
 
     // Build a unique key: drivers/<uuid>-<sanitised-filename>
@@ -84,6 +94,7 @@ export class R2Service {
       Bucket: this.bucket,
       Key: key,
       ContentType: contentType,
+      ContentLength: fileSize,
     });
 
     const uploadUrl = await getSignedUrl(this.client, command, {

@@ -29,6 +29,7 @@ export class R2Controller {
       dto.folder,
       dto.filename,
       dto.contentType,
+      dto.fileSize,
     );
   }
 
