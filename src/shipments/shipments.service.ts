@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DriverApplicationStatus, DriverStatus, Prisma } from '@prisma/client';
+import {
+  DriverApplicationStatus,
+  DriverStatus,
+  Prisma,
+  ShipmentStatus,
+} from '@prisma/client';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
@@ -293,8 +298,10 @@ export class ShipmentsService {
       throw new NotFoundException('Shipment not found');
     }
 
-    if (shipment.driverId) {
-      throw new BadRequestException('Shipment already assigned');
+    if (shipment.driverId === driverId) {
+      throw new BadRequestException(
+        'Shipment is already assigned to this driver',
+      );
     }
 
     const driver = await this.prisma.driver.findUnique({
@@ -314,18 +321,51 @@ export class ShipmentsService {
       throw new BadRequestException('Driver is not available');
     }
 
-    const [updatedShipment] = await this.prisma.$transaction([
-      this.prisma.shipment.update({
+    const previousDriverId = shipment.driverId;
+
+    return this.prisma.$transaction(async (tx) => {
+      const updatedShipment = await tx.shipment.update({
         where: { id: shipmentId },
         data: { driverId },
-      }),
-      this.prisma.driver.update({
+      });
+
+      await tx.driver.update({
         where: { id: driverId },
         data: { status: DriverStatus.BUSY },
-      }),
-    ]);
+      });
 
-    return updatedShipment;
+      if (previousDriverId && previousDriverId !== driverId) {
+        const previousDriver = await tx.driver.findUnique({
+          where: { id: previousDriverId },
+          select: { status: true },
+        });
+
+        const activeAssignments = await tx.shipment.count({
+          where: {
+            driverId: previousDriverId,
+            status: {
+              notIn: [
+                ShipmentStatus.DELIVERED,
+                ShipmentStatus.CANCELLED,
+                ShipmentStatus.HANDED_OFF,
+              ],
+            },
+          },
+        });
+
+        if (
+          previousDriver?.status === DriverStatus.BUSY &&
+          activeAssignments === 0
+        ) {
+          await tx.driver.update({
+            where: { id: previousDriverId },
+            data: { status: DriverStatus.AVAILABLE },
+          });
+        }
+      }
+
+      return updatedShipment;
+    });
   }
 
   async addCheckpoint(id: string, addCheckpointDto: AddCheckpointDto) {
