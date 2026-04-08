@@ -1,4 +1,11 @@
-import { IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
 
@@ -22,5 +29,13 @@ export class PresignUploadDto {
   @IsInt()
   @Min(1)
   @Max(MAX_UPLOAD_BYTES)
-  fileSize: number;
+  @IsOptional()
+  fileSize?: number;
+
+  /** Backward compatibility for clients sending lowercase "filesize". */
+  @IsInt()
+  @Min(1)
+  @Max(MAX_UPLOAD_BYTES)
+  @IsOptional()
+  filesize?: number;
 }

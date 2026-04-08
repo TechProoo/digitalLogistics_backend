@@ -25,11 +25,13 @@ export class R2Controller {
   @SetMetadata('response_message', 'Presigned upload URL generated.')
   @Post('presign')
   async presign(@Body() dto: PresignUploadDto) {
+    const resolvedFileSize = dto.fileSize ?? dto.filesize;
+
     return this.r2Service.presignUpload(
       dto.folder,
       dto.filename,
       dto.contentType,
-      dto.fileSize,
+      Number(resolvedFileSize),
     );
   }
 
