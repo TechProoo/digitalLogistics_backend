@@ -23,6 +23,8 @@ const defaultOrigins = [
   'https://digital-delivery.netlify.app',
   'https://digital-logistics-admin.netlify.app',
   'https://digitaldelivery-drivers.netlify.app',
+  'https://admin.digitaldelivery.org',
+  'https://drivers.digitaldelivery.org',
   'http://localhost:5175',
 ];
 
@@ -165,7 +167,14 @@ export class DeliveryGateway
     payload: {
       driverId: string;
       shipmentId: string;
-      action: 'accept' | 'reject' | 'pickup' | 'start' | 'handoff' | 'complete' | 'fail';
+      action:
+        | 'accept'
+        | 'reject'
+        | 'pickup'
+        | 'start'
+        | 'handoff'
+        | 'complete'
+        | 'fail';
     },
     @ConnectedSocket() client: Socket,
   ) {
@@ -175,12 +184,11 @@ export class DeliveryGateway
     );
 
     try {
-      const updatedShipment =
-        await this.deliveryService.updateDeliveryStatus(
-          shipmentId,
-          driverId,
-          action,
-        );
+      const updatedShipment = await this.deliveryService.updateDeliveryStatus(
+        shipmentId,
+        driverId,
+        action,
+      );
 
       // Notify admin room
       this.server.to('admin:tracking').emit('delivery:status-updated', {
@@ -210,10 +218,7 @@ export class DeliveryGateway
         timestamp: Date.now(),
       });
     } catch (error) {
-      this.logger.error(
-        `Status change failed: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Status change failed: ${error.message}`, error.stack);
       client.emit('delivery:status-error', {
         shipmentId,
         action,
@@ -237,7 +242,10 @@ export class DeliveryGateway
       timestamp: Date.now(),
     });
 
-    client.emit('tracking:stopped-ack', { status: 'ok', timestamp: Date.now() });
+    client.emit('tracking:stopped-ack', {
+      status: 'ok',
+      timestamp: Date.now(),
+    });
   }
 
   // ── Admin events ──────────────────────────────────────────────────────────
@@ -272,7 +280,9 @@ export class DeliveryGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { shipmentId: string; driverId: string },
   ) {
-    this.logger.log(`Admin assigning last-mile driver ${data.driverId} to shipment ${data.shipmentId}`);
+    this.logger.log(
+      `Admin assigning last-mile driver ${data.driverId} to shipment ${data.shipmentId}`,
+    );
 
     // Notify the last-mile driver
     this.server.to(`driver:${data.driverId}`).emit('delivery:assigned', {
@@ -281,7 +291,10 @@ export class DeliveryGateway
       timestamp: new Date().toISOString(),
     });
 
-    client.emit('delivery:lastmile-assigned', { success: true, shipmentId: data.shipmentId });
+    client.emit('delivery:lastmile-assigned', {
+      success: true,
+      shipmentId: data.shipmentId,
+    });
   }
 
   // ── Messaging events ─────────────────────────────────────────────────────
@@ -307,9 +320,7 @@ export class DeliveryGateway
       // Emit to admin tracking room so admin gets it
       this.server.to('admin:tracking').emit('message:new', message);
 
-      this.logger.log(
-        `Message sent: ${sender} -> driver ${driverId}`,
-      );
+      this.logger.log(`Message sent: ${sender} -> driver ${driverId}`);
     } catch (error) {
       this.logger.error(`Message send failed: ${error.message}`, error.stack);
       client.emit('message:error', {
@@ -331,14 +342,17 @@ export class DeliveryGateway
       await this.messagingService.markAsRead(driverId, readBy);
 
       // Notify the other party
-      const target = readBy === 'admin' ? `driver:${driverId}` : 'admin:tracking';
+      const target =
+        readBy === 'admin' ? `driver:${driverId}` : 'admin:tracking';
       this.server.to(target).emit('message:read', {
         driverId,
         readBy,
         timestamp: Date.now(),
       });
 
-      this.logger.log(`Messages marked as read by ${readBy} for driver ${driverId}`);
+      this.logger.log(
+        `Messages marked as read by ${readBy} for driver ${driverId}`,
+      );
     } catch (error) {
       this.logger.error(`Message read failed: ${error.message}`, error.stack);
       client.emit('message:error', {
