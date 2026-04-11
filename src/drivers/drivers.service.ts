@@ -153,14 +153,15 @@ export class DriversService {
       );
 
       // Send approval email with login credentials
-      const driverPlatformUrl =
-        process.env.DRIVER_PLATFORM_URL || 'http://localhost:5175';
+      const driverPlatformUrl = (
+        process.env.DRIVER_PLATFORM_URL || 'https://drivers.digitaldelivery.org'
+      ).replace(/\/+$/, '');
 
       await this.emailService.sendDriverApprovalEmail(driver.driverEmail, {
         name: driver.driverName,
         email: driver.driverEmail,
         tempPassword,
-        loginUrl: `${driverPlatformUrl}/login`,
+        loginUrl: `${driverPlatformUrl}/`,
       });
     }
 
