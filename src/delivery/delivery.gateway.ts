@@ -248,6 +248,41 @@ export class DeliveryGateway
     });
   }
 
+  /**
+   * Lightweight broadcast: the driver already updated the DB via REST,
+   * so we only relay the status change to the admin tracking room.
+   */
+  @SubscribeMessage('delivery:status-notify')
+  handleStatusNotify(
+    @MessageBody()
+    payload: {
+      shipmentId: string;
+      driverId: string;
+      action: string;
+      newStatus: string;
+    },
+    @ConnectedSocket() client: Socket,
+  ) {
+    this.logger.log(
+      `Status notify: driver=${payload.driverId} shipment=${payload.shipmentId} action=${payload.action}`,
+    );
+
+    this.server.to('admin:tracking').emit('delivery:status-updated', {
+      shipmentId: payload.shipmentId,
+      driverId: payload.driverId,
+      action: payload.action,
+      newStatus: payload.newStatus,
+      timestamp: Date.now(),
+    });
+
+    client.emit('delivery:status-confirmed', {
+      shipmentId: payload.shipmentId,
+      action: payload.action,
+      newStatus: payload.newStatus,
+      timestamp: Date.now(),
+    });
+  }
+
   // ── Admin events ──────────────────────────────────────────────────────────
 
   @SubscribeMessage('admin:connect')

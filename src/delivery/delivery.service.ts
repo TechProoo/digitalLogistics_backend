@@ -142,8 +142,15 @@ export class DeliveryService {
       const activeCount = await this.prisma.shipment.count({
         where: {
           driverId,
+          id: { not: shipmentId }, // exclude the shipment being accepted
           status: {
-            notIn: [ShipmentStatus.DELIVERED, ShipmentStatus.CANCELLED, ShipmentStatus.PENDING],
+            notIn: [
+              ShipmentStatus.DELIVERED,
+              ShipmentStatus.CANCELLED,
+              ShipmentStatus.PENDING,
+              ShipmentStatus.QUOTED,
+              ShipmentStatus.ARRIVED_HUB,
+            ],
           },
         },
       });
